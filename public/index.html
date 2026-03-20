@@ -487,9 +487,10 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height:
         <div class="step-sub">Para que el diagnóstico sea 100% personalizado a tu situación real.</div>
       </div>
       <div class="qcard">
+        <div class="fg"><label class="flabel">¿Cuánto pagas aproximadamente cada mes a esta tarjeta?</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="pago_real" placeholder="0"></div><div class="form-hint" style="font-size:12px;color:var(--carbon-muted);margin-top:5px">El monto que realmente depositas, no el mínimo ni el total del estado de cuenta.</div></div>
         <div class="fg"><label class="flabel">¿Cuánto puedes pagar cómodamente al mes sin ahogarte?</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="capacidad_pago" placeholder="0"></div></div>
         <div class="fg">
-          <label class="flabel">¿Cómo pagas normalmente tu tarjeta?</label>
+          <label class="flabel">¿Cómo describirías tu forma de pago habitual?</label>
           <div class="pill-group" id="pg-tipo_pago">
             <button class="pill" onclick="pill('pg-tipo_pago','total',this)">Pago total</button>
             <button class="pill" onclick="pill('pg-tipo_pago','minimo',this)">Pago mínimo</button>
@@ -619,7 +620,7 @@ const S = {
   nombre:'', email:'', whatsapp:'',
   fileData:null, fileType:null,
   saldo_total:0, saldo_revolvente:0, saldo_msi:0,
-  pago_minimo:0, pago_no_intereses:0,
+  pago_minimo:0, pago_no_intereses:0, pago_real:0,
   tasa_anual:0, cat:0, intereses_mes:0, cargos_nuevos:0, linea_credito:0,
   capacidad_pago:0, tipo_pago:'', usa_tarjeta:'', ingreso_tipo:'',
   estres_financiero:5, resultado:null
@@ -674,6 +675,7 @@ uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('over
 
 function launchAnalysis() {
   ['saldo_total','saldo_revolvente','saldo_msi','pago_minimo','pago_no_intereses','tasa_anual','cat','intereses_mes','cargos_nuevos','linea_credito'].forEach(k => { const el = document.getElementById(k); if (el) S[k] = parseFloat(el.value) || 0; });
+  S.pago_real        = parseFloat(document.getElementById('pago_real').value) || 0;
   S.capacidad_pago   = parseFloat(document.getElementById('capacidad_pago').value) || 0;
   S.estres_financiero = parseInt(document.getElementById('estres_financiero').value) || 5;
   S.tipo_pago  = document.getElementById('tipo_pago').value;
@@ -714,25 +716,122 @@ function buildPrompt() {
 
 ${bloqueA}
 
-BLOQUE B — CONTEXTO:
+BLOQUE B — CONTEXTO DEL USUARIO:
 - nombre: ${d.nombre}
+- pago_real_mensual: ${d.pago_real||'no proporcionado → calcula según tipo_pago'}
 - capacidad_pago_real: ${d.capacidad_pago||'no proporcionado → usa: pago_actual × 1.2'}
-- tipo_pago: ${d.tipo_pago}
+- tipo_pago_habitual: ${d.tipo_pago}
 - usa_tarjeta_mensual: ${d.usa_tarjeta}
 - ingreso_tipo: ${d.ingreso_tipo}
 - estres_financiero: ${d.estres_financiero}/10
 
-PASO 1 — pago_actual: total→pago_no_intereses | minimo→pago_minimo | intermedio→promedio de ambos
-PASO 2 — Bloque C: ratio_liquidez=pago_actual/capacidad_pago | ratio_interes=intereses_mes/pago_actual | ratio_revolvente=saldo_revolvente/saldo_total | ratio_uso_linea=saldo_total/linea_credito
-PASO 3 — 4 Índices (0-100): LIQUIDEZ(30%): <0.7→90|0.7-1→70|1-1.3→50|>1.3→25 | EFICIENCIA(25%): <0.15→90|0.15-0.30→70|0.30-0.50→50|>0.50→25 | ESPIRAL(25%): sin rev→90|rev bajo→70|rev+uso→50|alto+uso→25 | TOXICIDAD(20%): tasa<25%→90|25-40%→70|40-60%→50|>60%→25
-SCORE=(liq×0.30)+(ef×0.25)+(esp×0.25)+(tox×0.20) | 80-100=Estructura Sana|60-79=Fricción Financiera|40-59=Drenaje de Liquidez|0-39=Trampa de Deuda
-PASO 4 — costo_no_entender_12m = (saldo_rev×tasa_mensual×12) - (saldo_rev×tasa_mensual×12×0.6)
-PASO 5 — Detecta y selecciona 3 focos más graves entre: F1(pago>capacidad)|F2(tipo=minimo)|F3(total+usa_si)|F4(ratio_interes>0.4)|F5(tasa>40%)|F6(cat>60%)|F7(uso_linea>0.8)|F8(msi+revolvente)|F9(estres>=8)|F10(pago/saldo<0.03)
-PASO 6 — Escenarios simples estimados
-PASO 7 — Primera acción única, específica, máx 2 oraciones
+========================================
+INSTRUCCIONES DE CÁLCULO — SIGUE ESTE ORDEN EXACTO
+========================================
 
-Responde SOLO JSON sin markdown:
-{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0},"bloque_c":{"pago_actual":0,"ratio_liquidez":0,"ratio_interes":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto"},"eficiencia":{"score":0,"nivel":"Alto"},"espiral":{"score":0,"nivel":"Alto"},"toxicidad":{"score":0,"nivel":"Alto"}},"vive_ligero_score":0,"diagnostico_nivel":"Drenaje de Liquidez","descripcion_diagnostico":"string","costo_no_entender_12m":0,"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string"},"escenario_optimo":{"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0},"primera_accion":"string"}`;
+PASO 1 — DETERMINA pago_actual:
+PRIORIDAD: Si pago_real_mensual > 0 → pago_actual = pago_real_mensual (dato directo del usuario, más confiable)
+Si pago_real_mensual = 0:
+  tipo_pago = "total"      → pago_actual = pago_no_intereses
+  tipo_pago = "minimo"     → pago_actual = pago_minimo
+  tipo_pago = "intermedio" → pago_actual = (pago_minimo + pago_no_intereses) / 2
+Fallback final si todo falta: pago_actual = pago_minimo
+
+PASO 2 — CALCULA BLOQUE C (ratios):
+tasa_mensual     = tasa_anual / 12 / 100
+ratio_liquidez   = pago_actual / capacidad_pago_real
+ratio_interes    = intereses_mes / pago_actual
+ratio_revolvente = saldo_revolvente / saldo_total
+ratio_uso_linea  = saldo_total / linea_credito  (si linea_credito > 0, sino = 0)
+
+PASO 3 — CALCULA LOS 4 ÍNDICES (0–100 cada uno):
+
+LIQUIDEZ (peso 30%):
+  ratio_liquidez < 0.7  → score = 90
+  0.7 ≤ ratio < 1.0     → score = 70
+  1.0 ≤ ratio < 1.3     → score = 50
+  ratio ≥ 1.3           → score = 25
+
+EFICIENCIA (peso 25%):
+  ratio_interes < 0.15  → score = 90
+  0.15 ≤ ratio < 0.30   → score = 70
+  0.30 ≤ ratio < 0.50   → score = 50
+  ratio ≥ 0.50          → score = 25
+
+ESPIRAL (peso 25%):
+  saldo_revolvente = 0                              → score = 90
+  ratio_revolvente < 0.3 y usa_tarjeta = "no"      → score = 90
+  ratio_revolvente < 0.3                            → score = 70
+  ratio_revolvente ≥ 0.3 y usa_tarjeta ≠ "no"      → score = 50
+  ratio_revolvente ≥ 0.7 y usa_tarjeta = "si"      → score = 25
+
+TOXICIDAD (peso 20%):
+  tasa_anual < 25%      → score = 90
+  25% ≤ tasa < 40%      → score = 70
+  40% ≤ tasa < 60%      → score = 50
+  tasa ≥ 60%            → score = 25
+
+SCORE FINAL:
+  vive_ligero_score = round((liquidez×0.30) + (eficiencia×0.25) + (espiral×0.25) + (toxicidad×0.20))
+  80–100 → "Estructura Sana"
+  60–79  → "Fricción Financiera"
+  40–59  → "Drenaje de Liquidez"
+  0–39   → "Trampa de Deuda"
+
+PASO 4 — COSTO DE NO ENTENDER:
+  intereses_12m       = saldo_revolvente × tasa_mensual × 12
+  costo_no_entender   = intereses_12m × 0.40
+  (supuesto: estrategia óptima reduce 40% los intereses)
+
+PASO 5 — FOCOS ROJOS (evalúa todos, selecciona los 3 más graves):
+  F1:  pago_actual > capacidad_pago_real
+  F2:  tipo_pago = "minimo" O pago_actual ≈ pago_minimo (±5%)
+  F3:  tipo_pago = "total" Y usa_tarjeta = "si"
+  F4:  ratio_interes > 0.40
+  F5:  tasa_anual > 40
+  F6:  cat > 60
+  F7:  ratio_uso_linea > 0.80
+  F8:  saldo_msi > 0 Y saldo_revolvente > 0
+  F9:  estres_financiero ≥ 8
+  F10: pago_actual / saldo_total < 0.03
+
+PASO 6 — ESCENARIOS (USA AMORTIZACIÓN REAL, NO ESTIMACIONES):
+
+ESCENARIO 1 — Si todo sigue igual:
+Simula mes a mes sobre saldo_revolvente con pago_actual fijo:
+  saldo_0 = saldo_revolvente
+  Para cada mes n (máximo 360 meses):
+    interes_n      = saldo_{n-1} × tasa_mensual
+    capital_n      = pago_actual − interes_n
+    Si capital_n ≤ 0: la deuda crece → registra como "indefinido" y detén
+    saldo_n        = saldo_{n-1} − capital_n
+    intereses_acum += interes_n
+    Si saldo_n ≤ 0: registra n como meses_liquidacion_1, detén
+  intereses_totales_1 = suma de todos los interes_n
+  presion: si ratio_liquidez > 1.3 → "Alta" | 1.0–1.3 → "Media-alta" | 0.7–1.0 → "Media" | < 0.7 → "Baja"
+
+ESCENARIO 2 — Con estrategia óptima:
+  pago_optimo = capacidad_pago_real (el usuario paga lo que realmente puede)
+  Si pago_optimo ≤ saldo_revolvente × tasa_mensual: pago_optimo = saldo_revolvente × tasa_mensual × 1.2
+  Simula mes a mes igual que escenario 1 pero con pago_optimo:
+    saldo_0 = saldo_revolvente
+    Para cada mes n:
+      interes_n  = saldo_{n-1} × tasa_mensual
+      capital_n  = pago_optimo − interes_n
+      saldo_n    = saldo_{n-1} − capital_n
+      intereses_acum_2 += interes_n
+      Si saldo_n ≤ 0: registra n como meses_liquidacion_2, detén
+  ahorro_intereses      = intereses_totales_1 − intereses_acum_2
+  liquidez_recuperada   = pago_actual − pago_optimo
+  (si liquidez_recuperada < 0 significa que el usuario necesitaría pagar más, no menos)
+
+PASO 7 — PRIMERA ACCIÓN ÚNICA:
+Una sola acción concreta que el usuario pueda hacer esta semana. Máx 2 oraciones. Sin listas.
+
+========================================
+RESPONDE SOLO JSON SIN MARKDOWN:
+========================================
+{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0},"bloque_c":{"pago_actual":0,"tasa_mensual":0,"ratio_liquidez":0,"ratio_interes":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto"},"eficiencia":{"score":0,"nivel":"Alto"},"espiral":{"score":0,"nivel":"Alto"},"toxicidad":{"score":0,"nivel":"Alto"}},"vive_ligero_score":0,"diagnostico_nivel":"Drenaje de Liquidez","descripcion_diagnostico":"string","costo_no_entender_12m":0,"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string"},"escenario_optimo":{"pago_optimo":0,"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0},"primera_accion":"string"}`;
 }
 
 async function callAPI() {
@@ -809,7 +908,7 @@ function fmt(n) {
 async function sendToGHL(r) {
   if (!GHL_WEBHOOK || GHL_WEBHOOK === 'TU_WEBHOOK_GHL_AQUI') return;
   try {
-    await fetch(GHL_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName: S.nombre, email: S.email, phone: S.whatsapp, vl_score: r.vive_ligero_score, vl_nivel: r.diagnostico_nivel, vl_descripcion: r.descripcion_diagnostico, vl_costo_no_entender_12m: r.costo_no_entender_12m, vl_foco_1: r.focos_rojos?.[0]?.titulo, vl_foco_2: r.focos_rojos?.[1]?.titulo, vl_foco_3: r.focos_rojos?.[2]?.titulo, vl_idx_liquidez: r.indices?.liquidez?.nivel, vl_idx_eficiencia: r.indices?.eficiencia?.nivel, vl_idx_espiral: r.indices?.espiral?.nivel, vl_idx_toxicidad: r.indices?.toxicidad?.nivel, vl_saldo_total: S.saldo_total, vl_saldo_revolvente: S.saldo_revolvente, vl_tasa_anual: S.tasa_anual, vl_pago_minimo: S.pago_minimo, vl_capacidad_pago: S.capacidad_pago, vl_tipo_pago: S.tipo_pago, vl_usa_tarjeta: S.usa_tarjeta, vl_ingreso_tipo: S.ingreso_tipo, vl_estres: S.estres_financiero, vl_meses_sin_cambio: r.escenario_igual?.meses_liquidacion, vl_ahorro_potencial: r.escenario_optimo?.ahorro_intereses, vl_primera_accion: r.primera_accion, source: 'Diagnóstico Vive Ligero', tags: ['lead-magnet', 'diagnostico', `score-${r.vive_ligero_score}`, `nivel-${r.diagnostico_nivel}`] }) });
+    await fetch(GHL_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName: S.nombre, email: S.email, phone: S.whatsapp, vl_score: r.vive_ligero_score, vl_nivel: r.diagnostico_nivel, vl_descripcion: r.descripcion_diagnostico, vl_costo_no_entender_12m: r.costo_no_entender_12m, vl_foco_1: r.focos_rojos?.[0]?.titulo, vl_foco_2: r.focos_rojos?.[1]?.titulo, vl_foco_3: r.focos_rojos?.[2]?.titulo, vl_idx_liquidez: r.indices?.liquidez?.nivel, vl_idx_eficiencia: r.indices?.eficiencia?.nivel, vl_idx_espiral: r.indices?.espiral?.nivel, vl_idx_toxicidad: r.indices?.toxicidad?.nivel, vl_saldo_total: S.saldo_total, vl_saldo_revolvente: S.saldo_revolvente, vl_tasa_anual: S.tasa_anual, vl_pago_minimo: S.pago_minimo, vl_pago_real: S.pago_real, vl_capacidad_pago: S.capacidad_pago, vl_tipo_pago: S.tipo_pago, vl_usa_tarjeta: S.usa_tarjeta, vl_ingreso_tipo: S.ingreso_tipo, vl_estres: S.estres_financiero, vl_meses_sin_cambio: r.escenario_igual?.meses_liquidacion, vl_ahorro_potencial: r.escenario_optimo?.ahorro_intereses, vl_primera_accion: r.primera_accion, source: 'Diagnóstico Vive Ligero', tags: ['lead-magnet', 'diagnostico', `score-${r.vive_ligero_score}`, `nivel-${r.diagnostico_nivel}`] }) });
   } catch (e) { console.warn('GHL error:', e); }
 }
 
