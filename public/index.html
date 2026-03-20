@@ -1,0 +1,826 @@
+bash
+
+cat /home/claude/vive-ligero-vercel/public/index.html
+Salida
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Vive Ligero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --arena:           #E8DDD0;
+  --arena-dark:      #D9CDBF;
+  --arena-light:     #F4EEE6;
+  --salvia:          #7A9B7A;
+  --salvia-light:    #D4E4D4;
+  --salvia-dark:     #4F7050;
+  --niebla:          #8BA8B5;
+  --niebla-light:    #D0E1E8;
+  --terracota:       #B8694A;
+  --terracota-light: #F0D9CF;
+  --terracota-dark:  #8C4A31;
+  --tiza:            #F7F3EE;
+  --carbon:          #2A2520;
+  --carbon-soft:     #5C554E;
+  --carbon-muted:    #9E978F;
+  --borde:           rgba(42,37,32,0.10);
+  --borde-med:       rgba(42,37,32,0.18);
+  --sombra:          0 2px 8px rgba(42,37,32,0.07), 0 8px 32px rgba(42,37,32,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--arena);
+  color: var(--carbon);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* ORIGAMI BG */
+.origami-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; opacity: 0.35; }
+.origami-bg svg { width: 100%; height: 100%; }
+
+/* TYPOGRAPHY */
+.display { font-family: 'Cormorant Garamond', serif; font-weight: 300; line-height: 1.12; letter-spacing: -0.02em; }
+h1.display { font-size: clamp(36px, 6vw, 58px); }
+h2.display { font-size: clamp(26px, 4vw, 38px); }
+h3.display { font-size: clamp(20px, 3vw, 26px); }
+.eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terracota); }
+
+/* LAYOUT */
+.container    { max-width: 760px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+.container-sm { max-width: 580px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* NAV */
+.nav {
+  padding: 18px 0;
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(232,221,208,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--borde);
+}
+.nav-inner { max-width: 760px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+.logo-img { height: 36px; width: auto; display: block; }
+.logo-fallback { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--carbon); display: none; }
+.nav-btn {
+  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--carbon); cursor: pointer;
+  border: 1.5px solid var(--borde-med); border-radius: 100px; padding: 8px 20px;
+  background: transparent; transition: all 0.22s ease;
+}
+.nav-btn:hover { background: var(--carbon); color: var(--tiza); border-color: var(--carbon); }
+.progress-line { display: none; height: 2px; background: var(--arena-dark); }
+.progress-fill { height: 100%; background: var(--terracota); width: 0%; transition: width 0.4s ease; }
+
+/* HERO */
+.hero { position: relative; padding: 80px 0 72px; text-align: center; overflow: hidden; }
+.hero-line-art { position: absolute; inset: 0; pointer-events: none; opacity: 0.12; }
+.hero-eyebrow { margin-bottom: 18px; }
+.hero h1 { margin-bottom: 22px; max-width: 600px; margin-inline: auto; }
+.hero h1 em { font-style: italic; color: var(--terracota); }
+.hero-sub { font-size: 17px; color: var(--carbon-soft); max-width: 460px; margin: 0 auto 14px; line-height: 1.7; font-weight: 300; }
+.hero-bullets { display: flex; flex-direction: column; gap: 9px; max-width: 380px; margin: 0 auto 36px; text-align: left; }
+.hero-bullet { display: flex; align-items: flex-start; gap: 11px; font-size: 15px; color: var(--carbon-soft); font-weight: 300; }
+.hb-dot { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+.hero-tiempo { font-size: 12px; color: var(--carbon-muted); margin-top: 12px; letter-spacing: 0.03em; }
+
+/* VALIDATION */
+.s-validation { padding: 72px 0; border-top: 1px solid var(--borde); position: relative; }
+.v-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 32px 0; }
+.v-item { background: var(--tiza); border: 1px solid var(--borde); border-radius: 14px; padding: 18px 20px; font-size: 14px; color: var(--carbon-soft); line-height: 1.55; font-weight: 300; display: flex; gap: 11px; align-items: flex-start; }
+.v-dash { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; opacity: 0.5; }
+.v-note { font-size: 17px; color: var(--carbon-soft); padding-left: 18px; border-left: 2px solid var(--terracota); font-style: italic; font-family: 'Cormorant Garamond', serif; line-height: 1.5; font-weight: 300; }
+
+/* WHAT */
+.s-what { padding: 72px 0; background: var(--tiza); position: relative; }
+.what-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 32px; }
+.what-item { border: 1px solid var(--borde); border-radius: 14px; padding: 22px 24px; background: var(--arena-light); position: relative; overflow: hidden; }
+.what-item::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--salvia); border-radius: 3px 0 0 3px; }
+.what-check { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: var(--salvia-dark); text-transform: uppercase; margin-bottom: 6px; }
+.what-title { font-size: 15px; font-weight: 500; color: var(--carbon); margin-bottom: 5px; }
+.what-desc { font-size: 13px; color: var(--carbon-muted); line-height: 1.55; font-weight: 300; }
+
+/* HOW */
+.s-how { padding: 72px 0; border-top: 1px solid var(--borde); position: relative; }
+.steps-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; margin-top: 36px; border: 1px solid var(--borde); border-radius: 18px; overflow: hidden; background: var(--tiza); position: relative; }
+.steps-row::after { content: ''; position: absolute; top: 42px; left: 16.6%; right: 16.6%; height: 1px; background: var(--arena-dark); pointer-events: none; }
+.step-item { padding: 32px 24px; border-right: 1px solid var(--borde); position: relative; text-align: center; }
+.step-item:last-child { border-right: none; }
+.step-num-wrap { width: 42px; height: 42px; border: 1.5px solid var(--borde-med); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: var(--arena); font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: var(--terracota); position: relative; z-index: 1; }
+.step-title { font-size: 14px; font-weight: 500; color: var(--carbon); margin-bottom: 6px; }
+.step-desc { font-size: 13px; color: var(--carbon-muted); line-height: 1.55; font-weight: 300; }
+
+/* EXAMPLE */
+.s-example { padding: 72px 0; background: var(--carbon); position: relative; overflow: hidden; }
+.s-example-lines { position: absolute; inset: 0; pointer-events: none; opacity: 0.06; }
+.ex-inner { text-align: center; }
+.ex-inner h2 { color: rgba(247,243,238,0.88); margin-bottom: 8px; }
+.ex-inner p { font-size: 14px; color: rgba(247,243,238,0.38); margin-bottom: 28px; font-weight: 300; }
+.preview-card { max-width: 400px; margin: 0 auto; background: rgba(247,243,238,0.05); border: 1px solid rgba(247,243,238,0.12); border-radius: 18px; padding: 28px; text-align: left; }
+.prev-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(247,243,238,0.3); margin-bottom: 5px; }
+.prev-score-row { display: flex; align-items: baseline; gap: 5px; margin-bottom: 5px; }
+.prev-num { font-family: 'Cormorant Garamond', serif; font-size: 60px; font-weight: 300; color: var(--tiza); line-height: 1; letter-spacing: -3px; }
+.prev-of { font-size: 18px; color: rgba(247,243,238,0.28); font-weight: 300; }
+.prev-badge { display: inline-block; padding: 5px 14px; background: rgba(184,105,74,0.25); border: 1px solid rgba(184,105,74,0.35); border-radius: 100px; font-size: 13px; color: #F0D9CF; margin-bottom: 16px; }
+.prev-cost { background: rgba(247,243,238,0.04); border: 1px solid rgba(247,243,238,0.08); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.prev-cost-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(247,243,238,0.28); margin-bottom: 3px; }
+.prev-cost-num { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: #F0D9CF; letter-spacing: -0.5px; }
+.prev-focos { display: flex; flex-direction: column; gap: 8px; }
+.prev-foco { display: flex; align-items: center; gap: 9px; font-size: 13px; color: rgba(247,243,238,0.5); font-weight: 300; }
+.prev-foco-dot { width: 5px; height: 5px; background: #F0D9CF; border-radius: 50%; flex-shrink: 0; }
+
+/* CTA FINAL */
+.s-cta-final { padding: 80px 0; text-align: center; border-top: 1px solid var(--borde); position: relative; }
+.s-cta-final h2 { margin-bottom: 12px; }
+.s-cta-final p { font-size: 16px; color: var(--carbon-soft); margin-bottom: 30px; font-weight: 300; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500; border: none; cursor: pointer; border-radius: 100px; padding: 14px 32px; text-decoration: none; transition: all 0.22s ease; }
+.btn-primary { background: var(--carbon); color: var(--tiza); }
+.btn-primary:hover { background: var(--terracota); }
+.btn-cta { background: var(--terracota); color: var(--tiza); padding: 15px 34px; }
+.btn-cta:hover { background: var(--terracota-dark); }
+.btn-block { width: 100%; }
+.btn-ghost { background: transparent; color: var(--carbon-muted); font-size: 14px; padding: 10px 0; }
+.btn-ghost:hover { color: var(--carbon); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.privacy-note { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12px; color: var(--carbon-muted); margin-top: 12px; font-weight: 300; }
+
+/* QUIZ */
+.quiz-inner { max-width: 600px; margin: 0 auto; padding: 0 24px 100px; position: relative; z-index: 1; }
+.step-header { padding: 44px 0 28px; }
+.step-eyebrow { margin-bottom: 12px; }
+.step-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; line-height: 1.25; letter-spacing: -0.3px; margin-bottom: 8px; }
+.step-sub { font-size: 15px; color: var(--carbon-soft); line-height: 1.65; font-weight: 300; }
+.qcard { background: var(--tiza); border: 1px solid var(--borde); border-radius: 18px; padding: 28px; margin-bottom: 14px; box-shadow: var(--sombra); }
+.qcard-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--carbon-muted); margin-bottom: 20px; }
+.upload-zone { border: 1.5px dashed var(--borde-med); border-radius: 12px; padding: 36px 20px; text-align: center; cursor: pointer; position: relative; transition: all 0.22s; background: var(--arena); }
+.upload-zone:hover, .upload-zone.over { border-color: var(--terracota); background: var(--terracota-light); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.upload-icon { width: 40px; height: 40px; background: var(--carbon); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.upload-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.upload-hint { font-size: 13px; color: var(--carbon-muted); font-weight: 300; }
+.upload-ok { display: none; align-items: center; gap: 12px; padding: 13px 16px; background: var(--salvia-light); border-radius: 10px; border: 1px solid rgba(122,155,122,0.3); margin-top: 12px; }
+.upload-ok.show { display: flex; }
+.upload-ok-icon { width: 30px; height: 30px; background: var(--salvia); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; flex-shrink: 0; }
+.upload-ok-name { font-size: 14px; font-weight: 500; color: var(--salvia-dark); }
+.upload-ok-sub { font-size: 12px; color: var(--carbon-muted); }
+.or-row { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+.or-row::before, .or-row::after { content: ''; flex: 1; height: 1px; background: var(--borde); }
+.or-text { font-size: 12px; color: var(--carbon-muted); font-weight: 500; letter-spacing: 0.04em; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fg { margin-bottom: 16px; }
+.fg:last-child { margin-bottom: 0; }
+.flabel { display: block; font-size: 13px; font-weight: 500; color: var(--carbon-soft); margin-bottom: 6px; }
+.flabel em { font-style: normal; font-weight: 300; color: var(--carbon-muted); font-size: 12px; }
+.finput { width: 100%; padding: 11px 14px; border: 1.5px solid var(--borde); border-radius: 9px; font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--carbon); background: var(--arena); outline: none; transition: border-color 0.2s, background 0.2s; font-weight: 300; }
+.finput:focus { border-color: var(--terracota); background: var(--tiza); }
+.finput::placeholder { color: var(--carbon-muted); }
+.prefix-wrap { position: relative; }
+.prefix { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--carbon-muted); pointer-events: none; }
+.prefix-wrap .finput { padding-left: 26px; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.pill { padding: 8px 17px; border: 1.5px solid var(--borde); border-radius: 100px; font-size: 14px; cursor: pointer; transition: all 0.16s; background: var(--arena); color: var(--carbon-soft); font-family: 'Outfit', sans-serif; font-weight: 300; }
+.pill:hover { border-color: var(--terracota); color: var(--terracota); }
+.pill.on { border-color: var(--terracota); background: var(--terracota); color: var(--tiza); font-weight: 400; }
+.range-box { padding-bottom: 22px; position: relative; }
+.range-labs { display: flex; justify-content: space-between; font-size: 12px; color: var(--carbon-muted); margin-bottom: 8px; }
+input[type=range] { width: 100%; appearance: none; height: 3px; background: var(--borde); border-radius: 2px; outline: none; }
+input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--terracota); cursor: pointer; border: 3px solid var(--tiza); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+.range-val { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 500; color: var(--terracota); }
+.err-msg { background: var(--terracota-light); border: 1px solid rgba(184,105,74,0.25); border-radius: 9px; padding: 12px 16px; font-size: 13px; color: var(--terracota-dark); display: none; margin-bottom: 12px; font-weight: 300; }
+.err-msg.show { display: block; }
+.quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+
+/* LOADING */
+.loading-wrap { text-align: center; padding: 90px 20px; max-width: 400px; margin: 0 auto; position: relative; z-index: 1; }
+.loading-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--carbon); margin-bottom: 7px; }
+.loading-sub { font-size: 14px; color: var(--carbon-muted); margin-bottom: 32px; font-weight: 300; }
+.ls { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13px; color: var(--carbon-muted); border-bottom: 1px solid var(--borde); transition: color 0.3s; font-weight: 300; }
+.ls:last-child { border-bottom: none; }
+.ls.active { color: var(--terracota); }
+.ls.done { color: var(--salvia-dark); }
+.lsdot { width: 7px; height: 7px; border-radius: 50%; background: var(--borde); flex-shrink: 0; transition: background 0.3s; }
+.ls.active .lsdot { background: var(--terracota); animation: blink 0.9s ease infinite; }
+.ls.done .lsdot { background: var(--salvia); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* RESULTADO */
+.result-hero { background: var(--carbon); padding: 50px 24px 36px; text-align: center; position: relative; overflow: hidden; }
+.result-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 20%, rgba(184,105,74,0.15) 0%, transparent 60%); pointer-events: none; }
+.result-hero-lines { position: absolute; inset: 0; pointer-events: none; opacity: 0.07; }
+.rh-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(247,243,238,0.32); margin-bottom: 18px; }
+.rh-score { font-family: 'Cormorant Garamond', serif; font-size: 92px; font-weight: 300; color: var(--tiza); line-height: 1; letter-spacing: -5px; }
+.rh-of { font-size: 22px; color: rgba(247,243,238,0.25); font-weight: 300; }
+.rh-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 20px; border-radius: 100px; font-size: 13px; font-weight: 400; margin: 15px 0; }
+.b-verde    { background: rgba(122,155,122,0.25); color: #C0DEBC; border: 1px solid rgba(122,155,122,0.35); }
+.b-amarillo { background: rgba(184,105,74,0.2);  color: var(--terracota-light); border: 1px solid rgba(184,105,74,0.25); }
+.b-naranja  { background: rgba(184,105,74,0.3);  color: #F0D9CF; border: 1px solid rgba(184,105,74,0.38); }
+.b-rojo     { background: rgba(172,60,60,0.3);   color: #F9BFBF; border: 1px solid rgba(172,60,60,0.38); }
+.rh-desc { font-size: 15px; color: rgba(247,243,238,0.55); line-height: 1.65; max-width: 380px; margin: 0 auto 22px; font-weight: 300; }
+.rh-cost { max-width: 380px; margin: 0 auto; background: rgba(247,243,238,0.04); border: 1px solid rgba(247,243,238,0.09); border-radius: 13px; padding: 18px 22px; }
+.rh-cost-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.28); margin-bottom: 5px; }
+.rh-cost-num { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: #F0D9CF; letter-spacing: -1px; }
+.rh-cost-sub { font-size: 12px; color: rgba(247,243,238,0.3); margin-top: 3px; font-weight: 300; line-height: 1.4; }
+.idx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--carbon); padding: 0 24px 28px; }
+.idx-card { background: rgba(247,243,238,0.04); border: 1px solid rgba(247,243,238,0.07); border-radius: 10px; padding: 13px 14px; }
+.idx-lbl { font-size: 10px; color: rgba(247,243,238,0.28); letter-spacing: 0.03em; margin-bottom: 5px; font-weight: 300; }
+.idx-val { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+.idx-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.iv-alto  { color: #F9BFBF; } .iv-alto  .idx-dot { background: #F9BFBF; }
+.iv-medio { color: #F0D9CF; } .iv-medio .idx-dot { background: #F0D9CF; }
+.iv-bajo  { color: #C0DEBC; } .iv-bajo  .idx-dot { background: #C0DEBC; }
+.result-body { max-width: 600px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
+.section-lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--carbon-muted); margin: 36px 0 14px; display: flex; align-items: center; gap: 10px; }
+.section-lbl::after { content: ''; flex: 1; height: 1px; background: var(--borde); }
+.foco-card { background: var(--tiza); border: 1px solid var(--borde); border-left: 3px solid var(--terracota); border-radius: 13px; padding: 22px; margin-bottom: 10px; box-shadow: var(--sombra); }
+.foco-head { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 11px; }
+.foco-ico { width: 30px; height: 30px; background: var(--terracota-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.foco-title { font-size: 15px; font-weight: 500; color: var(--carbon); line-height: 1.35; }
+.foco-body { font-size: 14px; color: var(--carbon-soft); line-height: 1.6; font-weight: 300; }
+.foco-consec { margin-top: 11px; padding: 10px 14px; background: var(--terracota-light); border-radius: 8px; font-size: 13px; color: var(--terracota-dark); font-weight: 500; line-height: 1.45; }
+.esc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.esc-card { border-radius: 13px; padding: 22px; border: 1px solid var(--borde); }
+.esc-igual  { background: var(--tiza); }
+.esc-optimo { background: var(--salvia-light); border-color: rgba(122,155,122,0.25); }
+.esc-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px; }
+.esc-igual  .esc-tag { color: var(--carbon-muted); }
+.esc-optimo .esc-tag { color: var(--salvia-dark); }
+.esc-row { margin-bottom: 12px; }
+.esc-label { font-size: 11px; color: var(--carbon-muted); margin-bottom: 2px; font-weight: 300; }
+.esc-val { font-size: 16px; font-weight: 500; color: var(--carbon); }
+.esc-optimo .esc-val { color: var(--salvia-dark); }
+.accion-card { background: var(--carbon); color: var(--tiza); border-radius: 16px; padding: 28px; position: relative; overflow: hidden; }
+.accion-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 50%, rgba(184,105,74,0.12) 0%, transparent 65%); pointer-events: none; }
+.accion-eyebrow { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(247,243,238,0.35); margin-bottom: 11px; }
+.accion-text { font-size: 16px; color: rgba(247,243,238,0.85); line-height: 1.68; font-weight: 300; position: relative; }
+.cta-result { border: 1.5px solid var(--borde-med); border-radius: 18px; padding: 34px; text-align: center; margin-top: 14px; background: var(--arena-light); }
+.cta-result p { font-size: 14px; color: var(--carbon-soft); line-height: 1.65; margin-bottom: 22px; font-weight: 300; }
+
+@media(max-width:600px){
+  .v-grid,.what-grid,.steps-row,.frow,.esc-grid { grid-template-columns: 1fr; }
+  .steps-row::after { display: none; }
+  .step-item { border-right: none; border-bottom: 1px solid var(--borde); text-align: left; }
+  .step-num-wrap { margin: 0 0 14px; }
+  .idx-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ORIGAMI BG -->
+<div class="origami-bg" aria-hidden="true">
+<svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
+  <path d="M-20 600 L180 420 L80 280 L280 320 L400 180 L500 300 L680 100 L720 260 L860 200 L900 380 L1080 280 L1200 400 L1380 300 L1460 480" stroke="#7A9B7A" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M0 800 L200 700 L150 580 L350 540 L480 680 L600 560 L760 660 L920 520 L1100 640 L1260 500 L1460 620" stroke="#B8694A" stroke-width="0.6" stroke-linecap="round"/>
+  <path d="M400 900 L380 760 L480 700 L420 600 L560 580 L600 460 L700 500 L680 380 L800 360 L780 240" stroke="#8BA8B5" stroke-width="0.7" stroke-linecap="round"/>
+  <polygon points="120,80 180,20 240,80 180,140" stroke="#7A9B7A" stroke-width="0.7" fill="none"/>
+  <polygon points="1200,120 1280,60 1360,120 1280,180" stroke="#B8694A" stroke-width="0.7" fill="none"/>
+  <polygon points="700,820 760,760 820,820 760,880" stroke="#8BA8B5" stroke-width="0.6" fill="none"/>
+  <line x1="120" y1="80" x2="240" y2="80" stroke="#7A9B7A" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <line x1="180" y1="20" x2="180" y2="140" stroke="#7A9B7A" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <line x1="1200" y1="120" x2="1360" y2="120" stroke="#B8694A" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <line x1="1280" y1="60" x2="1280" y2="180" stroke="#B8694A" stroke-width="0.5" stroke-dasharray="3,3"/>
+</svg>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="mainNav">
+  <div class="nav-inner">
+    <a href="#" onclick="showView('landing');return false;" style="display:block;line-height:0">
+      <img src="https://assets.cdn.filesafe.space/1xgtTnreD0serAY0d4FN/media/69bb1c5653d4f1fc50b3d532.png"
+           alt="Vive Ligero" class="logo-img"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span class="logo-fallback">Vive Ligero</span>
+    </a>
+    <button class="nav-btn" onclick="startQuiz()">Hacer mi diagnóstico</button>
+  </div>
+  <div class="progress-line" id="progressLine">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</nav>
+
+<!-- ===== LANDING ===== -->
+<div class="view active" id="view-landing">
+
+  <section class="hero">
+    <div class="hero-line-art" aria-hidden="true">
+      <svg width="100%" height="100%" viewBox="0 0 800 500" fill="none" preserveAspectRatio="xMidYMid slice">
+        <path d="M60 240 L120 160 L80 100 L160 120 L200 60 L240 110 L200 160 L260 180 L200 220 L240 280 L160 260 Z" stroke="#7A9B7A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="80" y1="100" x2="200" y2="220" stroke="#7A9B7A" stroke-width="0.6" stroke-dasharray="4,4"/>
+        <line x1="160" y1="120" x2="160" y2="260" stroke="#7A9B7A" stroke-width="0.6" stroke-dasharray="4,4"/>
+        <path d="M620 180 L680 120 L700 180 L760 140 L740 200 L700 180 L720 260 L660 220 L620 280 L600 220 Z" stroke="#B8694A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M680 120 L700 180 L760 140" stroke="#B8694A" stroke-width="0.6" stroke-dasharray="3,3" fill="none"/>
+        <path d="M0 50 Q100 20 200 50 Q300 80 400 50 Q500 20 600 50 Q700 80 800 50" stroke="#8BA8B5" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+        <path d="M0 70 Q100 40 200 70 Q300 100 400 70 Q500 40 600 70 Q700 100 800 70" stroke="#8BA8B5" stroke-width="0.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="container-sm">
+      <div class="eyebrow hero-eyebrow">Diagnóstico Inteligente de Tarjetas</div>
+      <h1 class="display">Descubre qué está pasando <em>realmente</em> con tu tarjeta</h1>
+      <p class="hero-sub">Un diagnóstico claro que revela la salud de tu deuda y qué deberías hacer primero para recuperar control.</p>
+      <div class="hero-bullets">
+        <div class="hero-bullet"><svg class="hb-dot" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" fill="#B8694A"/><circle cx="9" cy="9" r="6" stroke="#B8694A" stroke-width="0.8" opacity="0.3"/></svg>Si tu tarjeta está drenando tu liquidez</div>
+        <div class="hero-bullet"><svg class="hb-dot" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" fill="#B8694A"/><circle cx="9" cy="9" r="6" stroke="#B8694A" stroke-width="0.8" opacity="0.3"/></svg>Cuánto podría costarte no entenderla</div>
+        <div class="hero-bullet"><svg class="hb-dot" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="3" fill="#B8694A"/><circle cx="9" cy="9" r="6" stroke="#B8694A" stroke-width="0.8" opacity="0.3"/></svg>Qué deberías hacer primero para avanzar</div>
+      </div>
+      <button class="btn btn-cta" onclick="startQuiz()">Hacer mi diagnóstico</button>
+      <div class="hero-tiempo">Tiempo estimado: 2 minutos &nbsp;·&nbsp; 100% gratuito</div>
+    </div>
+  </section>
+
+  <section class="s-validation">
+    <div class="container-sm">
+      <div class="eyebrow" style="margin-bottom:12px">¿Te suena familiar?</div>
+      <h2 class="display">Si tu tarjeta te genera dudas, probablemente vives algo de esto</h2>
+      <div class="v-grid">
+        <div class="v-item"><svg class="v-dash" viewBox="0 0 14 14" fill="none"><line x1="2" y1="7" x2="12" y2="7" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"/></svg>Pagas cada mes, pero la deuda no desaparece</div>
+        <div class="v-item"><svg class="v-dash" viewBox="0 0 14 14" fill="none"><line x1="2" y1="7" x2="12" y2="7" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"/></svg>No sabes si pagar el mínimo o el total</div>
+        <div class="v-item"><svg class="v-dash" viewBox="0 0 14 14" fill="none"><line x1="2" y1="7" x2="12" y2="7" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"/></svg>Sientes que la tarjeta te quita liquidez</div>
+        <div class="v-item"><svg class="v-dash" viewBox="0 0 14 14" fill="none"><line x1="2" y1="7" x2="12" y2="7" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"/></svg>No entiendes cuánto te está costando realmente</div>
+      </div>
+      <p class="v-note">No es falta de disciplina. La mayoría de las personas no entiende cómo funciona realmente la deuda de tarjetas.</p>
+    </div>
+  </section>
+
+  <section class="s-what">
+    <div class="container-sm">
+      <div class="eyebrow" style="margin-bottom:12px">Tu diagnóstico incluye</div>
+      <h2 class="display">En 2 minutos, claridad total sobre tu situación</h2>
+      <div class="what-grid">
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Vive Ligero Score</div><div class="what-desc">Un indicador claro de qué tan saludable es la estructura de tu tarjeta (0–100)</div></div>
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Tus 3 focos rojos</div><div class="what-desc">Los problemas más importantes que están afectando tu deuda hoy</div></div>
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Escenario a futuro</div><div class="what-desc">Cuánto tiempo tardarías en salir si todo sigue igual vs. si ajustas</div></div>
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Costo de no entender</div><div class="what-desc">Cuánto dinero podrías pagar de más si no cambias la estructura actual</div></div>
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Una primera acción</div><div class="what-desc">Qué hacer esta semana para empezar a recuperar control</div></div>
+        <div class="what-item"><div class="what-check">✓ Incluido</div><div class="what-title">Análisis personalizado</div><div class="what-desc">Basado en tus datos reales, no en promedios genéricos</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-how">
+    <div class="container-sm">
+      <div class="eyebrow" style="margin-bottom:12px">Así de simple</div>
+      <h2 class="display">En menos de 2 minutos</h2>
+      <div class="steps-row">
+        <div class="step-item"><div class="step-num-wrap">1</div><div class="step-title">Comparte tus datos</div><div class="step-desc">Sube tu estado de cuenta o ingresa 5 datos básicos</div></div>
+        <div class="step-item"><div class="step-num-wrap">2</div><div class="step-title">La IA lo analiza</div><div class="step-desc">Nuestro sistema analiza la estructura real de tu deuda</div></div>
+        <div class="step-item"><div class="step-num-wrap">3</div><div class="step-title">Recibes claridad</div><div class="step-desc">Tu diagnóstico personalizado con pasos concretos</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-example">
+    <svg class="s-example-lines" viewBox="0 0 1440 400" fill="none" preserveAspectRatio="xMidYMid slice">
+      <path d="M0 100 Q360 60 720 100 Q1080 140 1440 100" stroke="#F7F3EE" stroke-width="1" fill="none"/>
+      <polygon points="80,200 120,160 160,200 120,240" stroke="#F7F3EE" stroke-width="0.8" fill="none"/>
+      <line x1="80" y1="200" x2="160" y2="200" stroke="#F7F3EE" stroke-width="0.5" stroke-dasharray="3,3"/>
+      <line x1="120" y1="160" x2="120" y2="240" stroke="#F7F3EE" stroke-width="0.5" stroke-dasharray="3,3"/>
+    </svg>
+    <div class="container-sm ex-inner">
+      <h2 class="display">Así se ve tu diagnóstico</h2>
+      <p>Un ejemplo real de lo que recibirás</p>
+      <div class="preview-card">
+        <div class="prev-label">Vive Ligero Score</div>
+        <div class="prev-score-row"><span class="prev-num">47</span><span class="prev-of">/ 100</span></div>
+        <div class="prev-badge">🟠 Drenaje de Liquidez</div>
+        <div class="prev-cost"><div class="prev-cost-label">💸 Costo de no entender tu tarjeta</div><div class="prev-cost-num">$18,900</div></div>
+        <div class="prev-focos">
+          <div class="prev-foco"><div class="prev-foco-dot"></div>Sacrificio de liquidez innecesario</div>
+          <div class="prev-foco"><div class="prev-foco-dot"></div>Intereses absorbiendo tu pago</div>
+          <div class="prev-foco"><div class="prev-foco-dot"></div>Ciclo de deuda activo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cta-final">
+    <div class="container-sm">
+      <h2 class="display">Entiende qué está pasando con tu tarjeta</h2>
+      <p>Toma 2 minutos y obtén claridad real sobre tu situación.</p>
+      <button class="btn btn-cta" onclick="startQuiz()">Hacer mi diagnóstico</button>
+      <div class="privacy-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Puedes ocultar tu nombre. Tus datos son privados.</div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== QUIZ ===== -->
+<div class="view" id="view-quiz">
+  <div class="quiz-inner">
+    <div class="quiz-step" id="qstep-1">
+      <div class="step-header">
+        <div class="eyebrow step-eyebrow">Paso 1 de 3</div>
+        <div class="step-title">¿A quién le hacemos el diagnóstico?</div>
+        <div class="step-sub">Tus datos quedan privados. Puedes usar un seudónimo si prefieres.</div>
+      </div>
+      <div class="qcard">
+        <div class="fg"><label class="flabel">Nombre</label><input type="text" class="finput" id="nombre" placeholder="Tu nombre o seudónimo"></div>
+        <div class="fg"><label class="flabel">Correo electrónico</label><input type="email" class="finput" id="email" placeholder="tu@correo.com"></div>
+        <div class="fg" style="margin-bottom:0"><label class="flabel">WhatsApp <em>(opcional)</em></label><input type="tel" class="finput" id="whatsapp" placeholder="+1 555 000 0000"></div>
+      </div>
+      <div class="privacy-note" style="justify-content:flex-start;margin-bottom:16px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Tus datos no serán vendidos ni compartidos.</div>
+      <div class="err-msg" id="err1">Por favor ingresa al menos tu nombre y correo.</div>
+      <button class="btn btn-primary btn-block" onclick="goStep(2)">Continuar →</button>
+    </div>
+
+    <div class="quiz-step" id="qstep-2" style="display:none">
+      <div class="step-header">
+        <div class="eyebrow step-eyebrow">Paso 2 de 3 — Datos de tu tarjeta</div>
+        <div class="step-title">Cuéntanos sobre tu tarjeta</div>
+        <div class="step-sub">Sube tu estado de cuenta para extracción automática, o ingrésalos tú. Podemos trabajar con datos parciales.</div>
+      </div>
+      <div class="qcard">
+        <div class="qcard-title">Opción 1 — Sube tu estado de cuenta</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".pdf,image/*" onchange="handleFile(event)">
+          <div class="upload-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
+          <div class="upload-title">Arrastra tu archivo aquí</div>
+          <div class="upload-hint">PDF o imagen · JPG, PNG, PDF aceptados</div>
+        </div>
+        <div class="upload-ok" id="uploadOk">
+          <div class="upload-ok-icon">✓</div>
+          <div><div class="upload-ok-name" id="uploadFileName">—</div><div class="upload-ok-sub">La IA leerá los datos automáticamente</div></div>
+        </div>
+      </div>
+      <div class="or-row"><span class="or-text">o ingresa los datos manualmente</span></div>
+      <div class="qcard">
+        <div class="qcard-title">Opción 2 — Ingresar datos</div>
+        <div class="frow">
+          <div class="fg"><label class="flabel">Saldo total</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="saldo_total" placeholder="0"></div></div>
+          <div class="fg"><label class="flabel">Saldo revolvente <em>(genera intereses)</em></label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="saldo_revolvente" placeholder="0"></div></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="flabel">Pago mínimo</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="pago_minimo" placeholder="0"></div></div>
+          <div class="fg"><label class="flabel">Pago para no generar intereses</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="pago_no_intereses" placeholder="0"></div></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="flabel">Tasa anual <em>si la conoces</em></label><input type="number" class="finput" id="tasa_anual" placeholder="Ej: 48"></div>
+          <div class="fg"><label class="flabel">CAT <em>si aparece</em></label><input type="number" class="finput" id="cat" placeholder="Ej: 65"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="flabel">Intereses cobrados este mes</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="intereses_mes" placeholder="0"></div></div>
+          <div class="fg"><label class="flabel">Cargos nuevos este mes</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="cargos_nuevos" placeholder="0"></div></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="flabel">Límite de crédito <em>opcional</em></label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="linea_credito" placeholder="0"></div></div>
+          <div class="fg"><label class="flabel">Saldo en MSI <em>opcional</em></label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="saldo_msi" placeholder="0"></div></div>
+        </div>
+      </div>
+      <div class="quiz-nav">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Regresar</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Continuar →</button>
+      </div>
+    </div>
+
+    <div class="quiz-step" id="qstep-3" style="display:none">
+      <div class="step-header">
+        <div class="eyebrow step-eyebrow">Paso 3 de 3 — Tu contexto</div>
+        <div class="step-title">5 preguntas rápidas</div>
+        <div class="step-sub">Para que el diagnóstico sea 100% personalizado a tu situación real.</div>
+      </div>
+      <div class="qcard">
+        <div class="fg"><label class="flabel">¿Cuánto puedes pagar cómodamente al mes sin ahogarte?</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="capacidad_pago" placeholder="0"></div></div>
+        <div class="fg">
+          <label class="flabel">¿Cómo pagas normalmente tu tarjeta?</label>
+          <div class="pill-group" id="pg-tipo_pago">
+            <button class="pill" onclick="pill('pg-tipo_pago','total',this)">Pago total</button>
+            <button class="pill" onclick="pill('pg-tipo_pago','minimo',this)">Pago mínimo</button>
+            <button class="pill" onclick="pill('pg-tipo_pago','intermedio',this)">Monto intermedio</button>
+          </div>
+          <input type="hidden" id="tipo_pago">
+        </div>
+        <div class="fg">
+          <label class="flabel">¿Sigues usando la tarjeta para nuevos gastos mes a mes?</label>
+          <div class="pill-group" id="pg-usa_tarjeta">
+            <button class="pill" onclick="pill('pg-usa_tarjeta','si',this)">Sí, la uso</button>
+            <button class="pill" onclick="pill('pg-usa_tarjeta','no',this)">No, pausé su uso</button>
+            <button class="pill" onclick="pill('pg-usa_tarjeta','poco',this)">A veces</button>
+          </div>
+          <input type="hidden" id="usa_tarjeta">
+        </div>
+        <div class="fg">
+          <label class="flabel">¿Tus ingresos son fijos o variables?</label>
+          <div class="pill-group" id="pg-ingreso_tipo">
+            <button class="pill" onclick="pill('pg-ingreso_tipo','fijo',this)">Fijos (salario)</button>
+            <button class="pill" onclick="pill('pg-ingreso_tipo','variable',this)">Variables</button>
+            <button class="pill" onclick="pill('pg-ingreso_tipo','mixto',this)">Mixtos</button>
+          </div>
+          <input type="hidden" id="ingreso_tipo">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label class="flabel">Del 1 al 10, ¿cuánto estrés te genera tu situación financiera?</label>
+          <div class="range-box">
+            <div class="range-labs"><span>Sin estrés</span><span>Mucho estrés</span></div>
+            <input type="range" min="1" max="10" value="5" id="estres_financiero" oninput="document.getElementById('estresVal').textContent=this.value">
+            <div class="range-val" id="estresVal">5</div>
+          </div>
+        </div>
+      </div>
+      <div class="err-msg" id="err3">Por favor responde todas las preguntas antes de continuar.</div>
+      <div class="quiz-nav">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Regresar</button>
+        <button class="btn btn-primary" onclick="launchAnalysis()">Analizar mi tarjeta →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOADING ===== -->
+<div class="view" id="view-loading">
+  <div class="loading-wrap">
+    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style="margin:0 auto 24px;display:block;animation:spin-slow 3s linear infinite">
+      <path d="M30 10 L10 30 L20 50 L30 40 L40 50 L50 30 Z" stroke="#B8694A" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+      <path d="M20 50 L30 40 L40 50" stroke="#B8694A" stroke-width="0.8" stroke-dasharray="3,2" fill="none"/>
+      <line x1="10" y1="30" x2="50" y2="30" stroke="#B8694A" stroke-width="0.7" stroke-dasharray="3,2"/>
+      <line x1="30" y1="10" x2="30" y2="40" stroke="#B8694A" stroke-width="0.7" stroke-dasharray="3,2"/>
+    </svg>
+    <div class="loading-title">Analizando tu tarjeta</div>
+    <div class="loading-sub">Unos segundos. El diagnóstico se está generando.</div>
+    <div>
+      <div class="ls active" id="ls1"><div class="lsdot"></div>Procesando datos financieros</div>
+      <div class="ls" id="ls2"><div class="lsdot"></div>Calculando 4 índices propietarios</div>
+      <div class="ls" id="ls3"><div class="lsdot"></div>Detectando focos rojos</div>
+      <div class="ls" id="ls4"><div class="lsdot"></div>Proyectando escenarios</div>
+      <div class="ls" id="ls5"><div class="lsdot"></div>Generando tu diagnóstico personalizado</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESULTADO ===== -->
+<div class="view" id="view-resultado">
+  <div class="result-hero">
+    <svg class="result-hero-lines" viewBox="0 0 800 300" fill="none" preserveAspectRatio="xMidYMid slice">
+      <path d="M0 80 Q200 40 400 80 Q600 120 800 80" stroke="#F7F3EE" stroke-width="1" fill="none"/>
+      <polygon points="720,60 760,20 800,60 760,100" stroke="#F7F3EE" stroke-width="0.8" fill="none"/>
+      <line x1="720" y1="60" x2="800" y2="60" stroke="#F7F3EE" stroke-width="0.5" stroke-dasharray="3,3"/>
+      <line x1="760" y1="20" x2="760" y2="100" stroke="#F7F3EE" stroke-width="0.5" stroke-dasharray="3,3"/>
+    </svg>
+    <div class="rh-eyebrow">Diagnóstico Vive Ligero</div>
+    <div class="rh-score" id="rScore">—</div>
+    <div class="rh-of">/ 100</div>
+    <div id="rBadge" class="rh-badge b-naranja">—</div>
+    <div class="rh-desc" id="rDesc">—</div>
+    <div class="rh-cost">
+      <div class="rh-cost-label">💸 Costo de no entender tu tarjeta</div>
+      <div class="rh-cost-num" id="rCost">—</div>
+      <div class="rh-cost-sub">en intereses potenciales en los próximos 12 meses</div>
+    </div>
+  </div>
+  <div class="idx-grid" id="rIndices"></div>
+  <div class="result-body">
+    <div class="section-lbl">Lo que está pasando con tu tarjeta</div>
+    <div id="rFocos"></div>
+    <div class="section-lbl">¿Qué podría pasar?</div>
+    <div class="esc-grid">
+      <div class="esc-card esc-igual">
+        <div class="esc-tag">Si todo sigue igual</div>
+        <div class="esc-row"><div class="esc-label">Tiempo estimado de salida</div><div class="esc-val" id="e1tiempo">—</div></div>
+        <div class="esc-row"><div class="esc-label">Intereses aproximados</div><div class="esc-val" id="e1intereses">—</div></div>
+        <div class="esc-row"><div class="esc-label">Presión financiera</div><div class="esc-val" id="e1presion">—</div></div>
+      </div>
+      <div class="esc-card esc-optimo">
+        <div class="esc-tag">Si ajustas la estrategia</div>
+        <div class="esc-row"><div class="esc-label">Tiempo estimado de salida</div><div class="esc-val" id="e2tiempo">—</div></div>
+        <div class="esc-row"><div class="esc-label">Ahorro en intereses</div><div class="esc-val" id="e2ahorro">—</div></div>
+        <div class="esc-row"><div class="esc-label">Liquidez recuperada</div><div class="esc-val" id="e2liquidez">—</div></div>
+      </div>
+    </div>
+    <div class="section-lbl">Tu primera acción</div>
+    <div class="accion-card">
+      <div class="accion-eyebrow">Haz esto esta semana</div>
+      <div class="accion-text" id="rAccion">—</div>
+    </div>
+    <div class="cta-result">
+      <h3 class="display" style="font-size:22px;margin-bottom:10px">Este diagnóstico muestra qué está pasando.</h3>
+      <p>Convertirlo en un plan claro con orden de pagos y plazo definido requiere estructura.</p>
+      <button class="btn btn-cta btn-block" onclick="goToPlan()">Convertir esto en mi Plan de Enfoque Ligero →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — edita antes de publicar
+// ============================================================
+const GHL_WEBHOOK = 'TU_WEBHOOK_GHL_AQUI';
+const PLAN_URL    = 'TU_URL_LANDING_ASESORIA';
+// La API key vive en Vercel como variable de entorno ANTHROPIC_API_KEY
+// El frontend llama a /api/chat — nunca a Anthropic directamente
+
+const S = {
+  nombre:'', email:'', whatsapp:'',
+  fileData:null, fileType:null,
+  saldo_total:0, saldo_revolvente:0, saldo_msi:0,
+  pago_minimo:0, pago_no_intereses:0,
+  tasa_anual:0, cat:0, intereses_mes:0, cargos_nuevos:0, linea_credito:0,
+  capacidad_pago:0, tipo_pago:'', usa_tarjeta:'', ingreso_tipo:'',
+  estres_financiero:5, resultado:null
+};
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.getElementById('progressLine').style.display = id === 'quiz' ? 'block' : 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startQuiz() { showView('quiz'); goStep(1); }
+
+function goStep(n) {
+  document.querySelectorAll('.quiz-step').forEach(s => s.style.display = 'none');
+  const el = document.getElementById('qstep-' + n);
+  if (el) el.style.display = 'block';
+  document.getElementById('progressFill').style.width = (((n - 1) / 3) * 100) + '%';
+  if (n === 2) {
+    S.nombre   = document.getElementById('nombre').value.trim();
+    S.email    = document.getElementById('email').value.trim();
+    S.whatsapp = document.getElementById('whatsapp').value.trim();
+    if (!S.nombre || !S.email) { document.getElementById('err1').classList.add('show'); goStep(1); return; }
+    document.getElementById('err1').classList.remove('show');
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function pill(gid, val, el) {
+  document.querySelectorAll('#' + gid + ' .pill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  const m = { 'pg-tipo_pago': 'tipo_pago', 'pg-usa_tarjeta': 'usa_tarjeta', 'pg-ingreso_tipo': 'ingreso_tipo' };
+  if (m[gid]) { document.getElementById(m[gid]).value = val; S[m[gid]] = val; }
+}
+
+function handleFile(e) {
+  const f = e.target.files[0]; if (!f) return;
+  new FileReader().onload = ev => {
+    S.fileData = ev.target.result.split(',')[1];
+    S.fileType = f.type;
+    document.getElementById('uploadFileName').textContent = f.name;
+    document.getElementById('uploadOk').classList.add('show');
+    document.getElementById('uploadZone').style.opacity = '0.55';
+  };
+  const r = new FileReader(); r.onload = ev => { S.fileData = ev.target.result.split(',')[1]; S.fileType = f.type; document.getElementById('uploadFileName').textContent = f.name; document.getElementById('uploadOk').classList.add('show'); document.getElementById('uploadZone').style.opacity = '0.55'; }; r.readAsDataURL(f);
+}
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('over'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('over'));
+uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) handleFile({ target: { files: [f] } }); });
+
+function launchAnalysis() {
+  ['saldo_total','saldo_revolvente','saldo_msi','pago_minimo','pago_no_intereses','tasa_anual','cat','intereses_mes','cargos_nuevos','linea_credito'].forEach(k => { const el = document.getElementById(k); if (el) S[k] = parseFloat(el.value) || 0; });
+  S.capacidad_pago   = parseFloat(document.getElementById('capacidad_pago').value) || 0;
+  S.estres_financiero = parseInt(document.getElementById('estres_financiero').value) || 5;
+  S.tipo_pago  = document.getElementById('tipo_pago').value;
+  S.usa_tarjeta = document.getElementById('usa_tarjeta').value;
+  S.ingreso_tipo = document.getElementById('ingreso_tipo').value;
+  if (!S.tipo_pago || !S.usa_tarjeta || !S.ingreso_tipo) { document.getElementById('err3').classList.add('show'); return; }
+  document.getElementById('err3').classList.remove('show');
+  showView('loading');
+  animateLoading();
+  callAPI();
+}
+
+function animateLoading() {
+  const ids = ['ls1','ls2','ls3','ls4','ls5']; let i = 0;
+  const iv = setInterval(() => {
+    if (i > 0) { document.getElementById(ids[i-1]).classList.remove('active'); document.getElementById(ids[i-1]).classList.add('done'); }
+    if (i < ids.length) { document.getElementById(ids[i]).classList.add('active'); i++; } else clearInterval(iv);
+  }, 1600);
+}
+
+function buildPrompt() {
+  const d = S;
+  const bloqueA = d.fileData
+    ? 'Los datos del estado de cuenta están en el archivo adjunto. PRIMERO extrae todos los valores disponibles.'
+    : `BLOQUE A — DATOS DE LA TARJETA:
+- saldo_total: ${d.saldo_total||'no proporcionado'}
+- saldo_revolvente: ${d.saldo_revolvente||'no proporcionado'}
+- saldo_msi: ${d.saldo_msi||0}
+- pago_minimo: ${d.pago_minimo||'no proporcionado'}
+- pago_no_intereses: ${d.pago_no_intereses||'no proporcionado'}
+- tasa_anual: ${d.tasa_anual||'no proporcionado → usa DEFAULT 45%'}
+- cat: ${d.cat||'no proporcionado'}
+- intereses_mes: ${d.intereses_mes||'no proporcionado → estima: saldo_revolvente × (tasa_anual/12)'}
+- cargos_nuevos: ${d.cargos_nuevos||0}
+- linea_credito: ${d.linea_credito||'no proporcionado'}`;
+
+  return `Actúa como analista financiero especializado en deuda de tarjetas de crédito. Eres el copiloto del usuario: traduces números complejos en decisiones simples. Tono: honesto, calmo, directo, sin juicio.
+
+${bloqueA}
+
+BLOQUE B — CONTEXTO:
+- nombre: ${d.nombre}
+- capacidad_pago_real: ${d.capacidad_pago||'no proporcionado → usa: pago_actual × 1.2'}
+- tipo_pago: ${d.tipo_pago}
+- usa_tarjeta_mensual: ${d.usa_tarjeta}
+- ingreso_tipo: ${d.ingreso_tipo}
+- estres_financiero: ${d.estres_financiero}/10
+
+PASO 1 — pago_actual: total→pago_no_intereses | minimo→pago_minimo | intermedio→promedio de ambos
+PASO 2 — Bloque C: ratio_liquidez=pago_actual/capacidad_pago | ratio_interes=intereses_mes/pago_actual | ratio_revolvente=saldo_revolvente/saldo_total | ratio_uso_linea=saldo_total/linea_credito
+PASO 3 — 4 Índices (0-100): LIQUIDEZ(30%): <0.7→90|0.7-1→70|1-1.3→50|>1.3→25 | EFICIENCIA(25%): <0.15→90|0.15-0.30→70|0.30-0.50→50|>0.50→25 | ESPIRAL(25%): sin rev→90|rev bajo→70|rev+uso→50|alto+uso→25 | TOXICIDAD(20%): tasa<25%→90|25-40%→70|40-60%→50|>60%→25
+SCORE=(liq×0.30)+(ef×0.25)+(esp×0.25)+(tox×0.20) | 80-100=Estructura Sana|60-79=Fricción Financiera|40-59=Drenaje de Liquidez|0-39=Trampa de Deuda
+PASO 4 — costo_no_entender_12m = (saldo_rev×tasa_mensual×12) - (saldo_rev×tasa_mensual×12×0.6)
+PASO 5 — Detecta y selecciona 3 focos más graves entre: F1(pago>capacidad)|F2(tipo=minimo)|F3(total+usa_si)|F4(ratio_interes>0.4)|F5(tasa>40%)|F6(cat>60%)|F7(uso_linea>0.8)|F8(msi+revolvente)|F9(estres>=8)|F10(pago/saldo<0.03)
+PASO 6 — Escenarios simples estimados
+PASO 7 — Primera acción única, específica, máx 2 oraciones
+
+Responde SOLO JSON sin markdown:
+{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0},"bloque_c":{"pago_actual":0,"ratio_liquidez":0,"ratio_interes":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto"},"eficiencia":{"score":0,"nivel":"Alto"},"espiral":{"score":0,"nivel":"Alto"},"toxicidad":{"score":0,"nivel":"Alto"}},"vive_ligero_score":0,"diagnostico_nivel":"Drenaje de Liquidez","descripcion_diagnostico":"string","costo_no_entender_12m":0,"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string"},"escenario_optimo":{"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0},"primera_accion":"string"}`;
+}
+
+async function callAPI() {
+  try {
+    const content = [];
+    if (S.fileData) {
+      if (S.fileType === 'application/pdf') content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: S.fileData } });
+      else content.push({ type: 'image', source: { type: 'base64', media_type: S.fileType, data: S.fileData } });
+    }
+    content.push({ type: 'text', text: buildPrompt() });
+
+    // Llama al proxy en /api/chat — la API key nunca toca el browser
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2500,
+        messages: [{ role: 'user', content }]
+      })
+    });
+
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || 'Error ' + res.status); }
+    const data   = await res.json();
+    const raw    = data.content.find(b => b.type === 'text')?.text || '';
+    const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    S.resultado = result;
+    if (result.datos_extraidos) Object.assign(S, result.datos_extraidos);
+    sendToGHL(result);
+    renderResultado(result);
+  } catch (err) {
+    console.error(err);
+    showView('quiz'); goStep(3);
+    const e = document.getElementById('err3');
+    e.textContent = 'Error al analizar: ' + err.message + '. Intenta de nuevo.';
+    e.classList.add('show');
+  }
+}
+
+function renderResultado(r) {
+  document.getElementById('rScore').textContent = r.vive_ligero_score;
+  document.getElementById('rDesc').textContent  = r.descripcion_diagnostico;
+  const bMap = { 'Estructura Sana': 'b-verde', 'Fricción Financiera': 'b-amarillo', 'Drenaje de Liquidez': 'b-naranja', 'Trampa de Deuda': 'b-rojo' };
+  const eMap = { 'Estructura Sana': '🟢', 'Fricción Financiera': '🟡', 'Drenaje de Liquidez': '🟠', 'Trampa de Deuda': '🔴' };
+  const bEl = document.getElementById('rBadge');
+  bEl.className = 'rh-badge ' + (bMap[r.diagnostico_nivel] || 'b-naranja');
+  bEl.textContent = (eMap[r.diagnostico_nivel] || '🟠') + ' ' + r.diagnostico_nivel;
+  document.getElementById('rCost').textContent = fmt(r.costo_no_entender_12m);
+
+  const iK = [{ k: 'liquidez', l: 'Presión de liquidez' }, { k: 'eficiencia', l: 'Eficiencia de pago' }, { k: 'espiral', l: 'Riesgo de espiral' }, { k: 'toxicidad', l: 'Toxicidad financiera' }];
+  const nC = { Alto: 'iv-alto', Medio: 'iv-medio', Bajo: 'iv-bajo' };
+  const nT = { Alto: 'Alta', Medio: 'Media', Bajo: 'Baja' };
+  document.getElementById('rIndices').innerHTML = iK.map(i => `<div class="idx-card"><div class="idx-lbl">${i.l}</div><div class="idx-val ${nC[r.indices[i.k]?.nivel] || ''}"><div class="idx-dot"></div>${nT[r.indices[i.k]?.nivel] || '—'}</div></div>`).join('');
+
+  const ico = `<svg viewBox="0 0 14 14" fill="none" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="3" x2="7" y2="8"/><circle cx="7" cy="10.5" r="0.5" fill="#B8694A" stroke="none"/><circle cx="7" cy="7" r="6" stroke-width="1"/></svg>`;
+  document.getElementById('rFocos').innerHTML = (r.focos_rojos || []).map(f => `<div class="foco-card"><div class="foco-head"><div class="foco-ico">${ico}</div><div class="foco-title">${f.titulo}</div></div><div class="foco-body">${f.que_pasa}<br><br>${f.por_que_importa}</div><div class="foco-consec">Consecuencia: ${f.consecuencia}</div></div>`).join('');
+
+  document.getElementById('e1tiempo').textContent    = r.escenario_igual?.meses_liquidacion + ' meses';
+  document.getElementById('e1intereses').textContent = fmt(r.escenario_igual?.intereses_totales);
+  document.getElementById('e1presion').textContent   = r.escenario_igual?.presion || '—';
+  document.getElementById('e2tiempo').textContent    = r.escenario_optimo?.meses_liquidacion + ' meses';
+  document.getElementById('e2ahorro').textContent    = fmt(r.escenario_optimo?.ahorro_intereses);
+  document.getElementById('e2liquidez').textContent  = fmt(r.escenario_optimo?.liquidez_recuperada_mes) + '/mes';
+  document.getElementById('rAccion').textContent     = r.primera_accion;
+  showView('resultado');
+}
+
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+}
+
+async function sendToGHL(r) {
+  if (!GHL_WEBHOOK || GHL_WEBHOOK === 'TU_WEBHOOK_GHL_AQUI') return;
+  try {
+    await fetch(GHL_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName: S.nombre, email: S.email, phone: S.whatsapp, vl_score: r.vive_ligero_score, vl_nivel: r.diagnostico_nivel, vl_descripcion: r.descripcion_diagnostico, vl_costo_no_entender_12m: r.costo_no_entender_12m, vl_foco_1: r.focos_rojos?.[0]?.titulo, vl_foco_2: r.focos_rojos?.[1]?.titulo, vl_foco_3: r.focos_rojos?.[2]?.titulo, vl_idx_liquidez: r.indices?.liquidez?.nivel, vl_idx_eficiencia: r.indices?.eficiencia?.nivel, vl_idx_espiral: r.indices?.espiral?.nivel, vl_idx_toxicidad: r.indices?.toxicidad?.nivel, vl_saldo_total: S.saldo_total, vl_saldo_revolvente: S.saldo_revolvente, vl_tasa_anual: S.tasa_anual, vl_pago_minimo: S.pago_minimo, vl_capacidad_pago: S.capacidad_pago, vl_tipo_pago: S.tipo_pago, vl_usa_tarjeta: S.usa_tarjeta, vl_ingreso_tipo: S.ingreso_tipo, vl_estres: S.estres_financiero, vl_meses_sin_cambio: r.escenario_igual?.meses_liquidacion, vl_ahorro_potencial: r.escenario_optimo?.ahorro_intereses, vl_primera_accion: r.primera_accion, source: 'Diagnóstico Vive Ligero', tags: ['lead-magnet', 'diagnostico', `score-${r.vive_ligero_score}`, `nivel-${r.diagnostico_nivel}`] }) });
+  } catch (e) { console.warn('GHL error:', e); }
+}
+
+function goToPlan() {
+  if (!PLAN_URL || PLAN_URL === 'TU_URL_LANDING_ASESORIA') { alert('Configura PLAN_URL con la URL de tu landing.'); return; }
+  window.open(PLAN_URL, '_blank');
+}
+</script>
+</body>
+</html>
