@@ -779,6 +779,16 @@ UNA VEZ EXTRAÍDO saldo_msi de la imagen, calcula:
 - cargos_nuevos: ${d.cargos_nuevos||0}
 - linea_credito: ${d.linea_credito||'no proporcionado'}
 - capacidad_disponible_real (pre-calculada): ${capacidad_disponible}`;
+
+  return `Actúa como analista financiero especializado en deuda de tarjetas de crédito. Eres el copiloto del usuario: traduces números complejos en decisiones simples. Tono: honesto, calmo, directo, sin juicio.
+
+${bloqueA}
+
+BLOQUE B — CONTEXTO DEL USUARIO:
+- nombre: ${d.nombre}
+- pago_real_mensual: ${d.pago_real||'no proporcionado → calcula según tipo_pago'}
+- capacidad_pago_bruta: ${d.capacidad_pago||'no proporcionado → usa: pago_actual × 1.2'}
+- capacidad_disponible_real: ${capacidad_disponible||'igual a capacidad_pago (sin MSI activos)'}
 - tipo_pago_habitual: ${d.tipo_pago}
 - usa_tarjeta_mensual: ${d.usa_tarjeta}
 - ingreso_tipo: ${d.ingreso_tipo}
@@ -1069,4 +1079,3 @@ function goToPlan() {
 </script>
 </body>
 </html>
-
