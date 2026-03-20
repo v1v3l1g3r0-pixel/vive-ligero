@@ -755,12 +755,21 @@ function buildPrompt() {
     : 0;
 
   const bloqueA = d.fileData
-    ? 'Los datos del estado de cuenta están en el archivo adjunto. PRIMERO extrae todos los valores disponibles incluyendo: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, cargos_nuevos, linea_credito. Si aparece información sobre meses restantes de MSI, extráela también.'
+    ? `Los datos del estado de cuenta están en el archivo adjunto. PRIMERO extrae todos los valores: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, cargos_nuevos, linea_credito.
+
+DATOS ADICIONALES YA CAPTURADOS EN EL CUESTIONARIO (úsalos tal cual):
+- meses_restantes_msi: ${d.meses_restantes_msi || 0} (meses que le quedan a las compras MSI)
+- pago_real_mensual: ${d.pago_real || 0} (lo que realmente paga el usuario cada mes)
+- capacidad_pago_bruta: ${d.capacidad_pago || 0}
+
+UNA VEZ EXTRAÍDO saldo_msi de la imagen, calcula:
+  pago_fijo_msi = saldo_msi / meses_restantes_msi  (si meses_restantes_msi > 0, sino 0)
+  capacidad_disponible_real = MAX(0, capacidad_pago_bruta - pago_fijo_msi)`
     : `BLOQUE A — DATOS DE LA TARJETA:
 - saldo_total: ${d.saldo_total||'no proporcionado'}
 - saldo_revolvente: ${d.saldo_revolvente||'no proporcionado'}
 - saldo_msi: ${d.saldo_msi||0}
-- meses_restantes_msi: ${d.meses_restantes_msi||'no proporcionado'}
+- meses_restantes_msi: ${d.meses_restantes_msi||0}
 - pago_fijo_msi_mensual: ${pago_fijo_msi||'no aplica (sin MSI o sin meses informados)'}
 - pago_minimo: ${d.pago_minimo||'no proporcionado'}
 - pago_no_intereses: ${d.pago_no_intereses||'no proporcionado'}
@@ -768,17 +777,8 @@ function buildPrompt() {
 - cat: ${d.cat||'no proporcionado'}
 - intereses_mes: ${d.intereses_mes||'no proporcionado → estima: saldo_revolvente × (tasa_anual/12)'}
 - cargos_nuevos: ${d.cargos_nuevos||0}
-- linea_credito: ${d.linea_credito||'no proporcionado'}`;
-
-  return `Actúa como analista financiero especializado en deuda de tarjetas de crédito. Eres el copiloto del usuario: traduces números complejos en decisiones simples. Tono: honesto, calmo, directo, sin juicio.
-
-${bloqueA}
-
-BLOQUE B — CONTEXTO DEL USUARIO:
-- nombre: ${d.nombre}
-- pago_real_mensual: ${d.pago_real||'no proporcionado → calcula según tipo_pago'}
-- capacidad_pago_bruta: ${d.capacidad_pago||'no proporcionado → usa: pago_actual × 1.2'}
-- capacidad_disponible_real: ${capacidad_disponible||'igual a capacidad_pago (sin MSI activos)'}
+- linea_credito: ${d.linea_credito||'no proporcionado'}
+- capacidad_disponible_real (pre-calculada): ${capacidad_disponible}`;
 - tipo_pago_habitual: ${d.tipo_pago}
 - usa_tarjeta_mensual: ${d.usa_tarjeta}
 - ingreso_tipo: ${d.ingreso_tipo}
