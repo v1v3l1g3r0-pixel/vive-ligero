@@ -516,10 +516,10 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height:
           </div>
           <input type="hidden" id="ingreso_tipo">
         </div>
-        <div class="fg" id="fg-msi" style="display:none">
-          <label class="flabel">¿Cuántos meses aproximados le quedan a tus compras a meses sin intereses?</label>
-          <input type="number" class="finput" id="meses_restantes_msi" placeholder="Ej: 12" min="1" max="48">
-          <div style="font-size:12px;color:var(--carbon-muted);margin-top:5px">Revisa tu estado de cuenta — busca "meses restantes" en cada plan MSI. Si tienes varios, usa el promedio.</div>
+        <div class="fg" id="fg-msi">
+          <label class="flabel">¿Cuántos meses aproximados le quedan a tus compras a meses sin intereses? <em>(si tienes MSI)</em></label>
+          <input type="number" class="finput" id="meses_restantes_msi" placeholder="Ej: 12 — escribe 0 si no tienes MSI" min="0" max="48">
+          <div style="font-size:12px;color:var(--carbon-muted);margin-top:5px">Revisa tu estado de cuenta — busca "meses restantes" en cada plan MSI. Si tienes varios, usa el promedio. Si no tienes MSI, escribe 0.</div>
         </div>
         <div class="fg" style="margin-bottom:0">
           <label class="flabel">Del 1 al 10, ¿cuánto estrés te genera tu situación financiera?</label>
@@ -659,9 +659,7 @@ function goStep(n) {
     document.getElementById('err1').classList.remove('show');
   }
   if (n === 3) {
-    // Mostrar campo MSI solo si el usuario ingresó saldo_msi > 0
-    const saldoMsi = parseFloat(document.getElementById('saldo_msi').value) || 0;
-    document.getElementById('fg-msi').style.display = saldoMsi > 0 ? 'block' : 'none';
+    // Campo MSI siempre visible — usuario ingresa 0 si no aplica
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -717,13 +715,16 @@ function buildPrompt() {
   const d = S;
 
   // Pre-calcular variables MSI en el cliente para pasarlas al prompt
+  // meses_restantes_msi = 0 significa que el usuario no tiene MSI activos
   const pago_fijo_msi = (d.saldo_msi > 0 && d.meses_restantes_msi > 0)
     ? Math.round(d.saldo_msi / d.meses_restantes_msi)
     : 0;
-  const capacidad_disponible = Math.max(0, d.capacidad_pago - pago_fijo_msi);
+  const capacidad_disponible = d.capacidad_pago > 0
+    ? Math.max(0, d.capacidad_pago - pago_fijo_msi)
+    : 0;
 
   const bloqueA = d.fileData
-    ? 'Los datos del estado de cuenta están en el archivo adjunto. PRIMERO extrae todos los valores disponibles.'
+    ? 'Los datos del estado de cuenta están en el archivo adjunto. PRIMERO extrae todos los valores disponibles incluyendo: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, cargos_nuevos, linea_credito. Si aparece información sobre meses restantes de MSI, extráela también.'
     : `BLOQUE A — DATOS DE LA TARJETA:
 - saldo_total: ${d.saldo_total||'no proporcionado'}
 - saldo_revolvente: ${d.saldo_revolvente||'no proporcionado'}
