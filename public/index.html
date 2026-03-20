@@ -797,8 +797,11 @@ SCORE = round((liq×0.30)+(ef×0.25)+(esp×0.25)+(tox×0.20))
 80–100=Estructura Sana | 60–79=Fricción Financiera | 40–59=Drenaje de Liquidez | 0–39=Trampa de Deuda
 
 PASO 4 — COSTO DE NO ENTENDER:
+  tasa_mensual      = tasa_anual / 12 / 100
   intereses_12m     = saldo_revolvente × tasa_mensual × 12
   costo_no_entender = intereses_12m × 0.40
+  IMPORTANTE: usa saldo_revolvente para este cálculo, NO saldo_total.
+  Ejemplo con estos datos: ${S.saldo_revolvente} × ${S.tasa_anual ? (S.tasa_anual/12/100).toFixed(5) : '0.00375'} × 12 × 0.40
 
 PASO 5 — FOCOS ROJOS (evalúa todos, selecciona los 3 más graves):
   F1:  pago_actual > capacidad_disponible_real
@@ -866,7 +869,7 @@ Máx 2 oraciones. Sin listas.
 ========================================
 RESPONDE SOLO JSON SIN MARKDOWN:
 ========================================
-{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0,"meses_restantes_msi":0,"pago_fijo_msi":0},"bloque_c":{"pago_actual":0,"tasa_mensual":0,"pago_fijo_msi":0,"capacidad_disponible_real":0,"pct_capacidad_en_msi":0,"ratio_liquidez":0,"ratio_interes":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto"},"eficiencia":{"score":0,"nivel":"Alto"},"espiral":{"score":0,"nivel":"Alto"},"toxicidad":{"score":0,"nivel":"Alto"}},"vive_ligero_score":0,"diagnostico_nivel":"Drenaje de Liquidez","descripcion_diagnostico":"string","costo_no_entender_12m":0,"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string"},"escenario_optimo":{"pago_optimo":0,"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0,"nota_msi":"string o null"},"primera_accion":"string"}`;
+{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0,"meses_restantes_msi":0,"pago_fijo_msi":0},"bloque_c":{"pago_actual":0,"tasa_mensual":0,"pago_fijo_msi":0,"capacidad_disponible_real":0,"pct_capacidad_en_msi":0,"ratio_liquidez":0,"ratio_interes":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto o Medio o Bajo — usa exactamente uno de estos tres valores"},"eficiencia":{"score":0,"nivel":"Alto o Medio o Bajo"},"espiral":{"score":0,"nivel":"Alto o Medio o Bajo"},"toxicidad":{"score":0,"nivel":"Alto o Medio o Bajo"}},"vive_ligero_score":0,"diagnostico_nivel":"Estructura Sana o Fricción Financiera o Drenaje de Liquidez o Trampa de Deuda","descripcion_diagnostico":"string","costo_no_entender_12m":0,"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string"},"escenario_optimo":{"pago_optimo":0,"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0,"nota_msi":"string o null"},"primera_accion":"string"}`;
 }
 
 async function callAPI() {
@@ -918,9 +921,21 @@ function renderResultado(r) {
   document.getElementById('rCost').textContent = fmt(r.costo_no_entender_12m);
 
   const iK = [{ k: 'liquidez', l: 'Presión de liquidez' }, { k: 'eficiencia', l: 'Eficiencia de pago' }, { k: 'espiral', l: 'Riesgo de espiral' }, { k: 'toxicidad', l: 'Toxicidad financiera' }];
+  // Normalizar niveles — Claude puede devolver Alto/Medio/Bajo o Alta/Media/Baja
+  const normalizeNivel = (n) => {
+    if (!n) return null;
+    const s = n.toLowerCase();
+    if (s.startsWith('alt')) return 'Alto';
+    if (s.startsWith('med')) return 'Medio';
+    if (s.startsWith('baj')) return 'Bajo';
+    return 'Medio'; // fallback
+  };
   const nC = { Alto: 'iv-alto', Medio: 'iv-medio', Bajo: 'iv-bajo' };
   const nT = { Alto: 'Alta', Medio: 'Media', Bajo: 'Baja' };
-  document.getElementById('rIndices').innerHTML = iK.map(i => `<div class="idx-card"><div class="idx-lbl">${i.l}</div><div class="idx-val ${nC[r.indices[i.k]?.nivel] || ''}"><div class="idx-dot"></div>${nT[r.indices[i.k]?.nivel] || '—'}</div></div>`).join('');
+  document.getElementById('rIndices').innerHTML = iK.map(i => {
+    const nivel = normalizeNivel(r.indices?.[i.k]?.nivel);
+    return `<div class="idx-card"><div class="idx-lbl">${i.l}</div><div class="idx-val ${nC[nivel] || 'iv-medio'}"><div class="idx-dot"></div>${nT[nivel] || '—'}</div></div>`;
+  }).join('');
 
   const ico = `<svg viewBox="0 0 14 14" fill="none" stroke="#B8694A" stroke-width="1.5" stroke-linecap="round"><line x1="7" y1="3" x2="7" y2="8"/><circle cx="7" cy="10.5" r="0.5" fill="#B8694A" stroke="none"/><circle cx="7" cy="7" r="6" stroke-width="1"/></svg>`;
   document.getElementById('rFocos').innerHTML = (r.focos_rojos || []).map(f => `<div class="foco-card"><div class="foco-head"><div class="foco-ico">${ico}</div><div class="foco-title">${f.titulo}</div></div><div class="foco-body">${f.que_pasa}<br><br>${f.por_que_importa}</div><div class="foco-consec">Consecuencia: ${f.consecuencia}</div></div>`).join('');
@@ -972,4 +987,3 @@ function goToPlan() {
 </script>
 </body>
 </html>
- 
