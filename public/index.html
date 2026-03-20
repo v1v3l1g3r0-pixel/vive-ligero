@@ -1017,16 +1017,17 @@ function fmt(n) {
 }
 
 async function sendToGHL(r) {
-  if (!GHL_WEBHOOK || GHL_WEBHOOK === 'https://services.leadconnectorhq.com/hooks/1xgtTnreD0serAY0d4FN/webhook-trigger/BoRjq2LUyxQZ0cRd71YQ') return;
   try {
     const payload = {
-      // ── Datos del contacto (campos nativos de GHL) ──
+      // Contacto
       firstName: S.nombre,
       email:     S.email,
       phone:     S.whatsapp,
+      tags: ['lead-magnet', 'diagnostico-vl',
+             `score-${r.vive_ligero_score}`,
+             `nivel-${r.diagnostico_nivel}`],
 
-      // ── Campos personalizados que ya existen en GHL ──
-      // Usa el nombre exacto del campo custom field (snake_case)
+      // Campos que ya existen en GHL
       vl_score:          r.vive_ligero_score,
       vl_diagnostico:    r.diagnostico_nivel,
       vl_costo_oculto:   r.costo_no_entender_12m,
@@ -1036,40 +1037,29 @@ async function sendToGHL(r) {
       vl_ingreso_tipo:   S.ingreso_tipo,
       vl_estres:         S.estres_financiero,
 
-      // ── Campos adicionales (créalos en GHL si quieres usarlos) ──
-      vl_descripcion:        r.descripcion_diagnostico,
-      vl_foco_1:             r.focos_rojos?.[0]?.titulo,
-      vl_foco_2:             r.focos_rojos?.[1]?.titulo,
-      vl_foco_3:             r.focos_rojos?.[2]?.titulo,
-      vl_idx_liquidez:       r.indices?.liquidez?.nivel,
-      vl_idx_eficiencia:     r.indices?.eficiencia?.nivel,
-      vl_idx_espiral:        r.indices?.espiral?.nivel,
-      vl_idx_toxicidad:      r.indices?.toxicidad?.nivel,
-      vl_saldo_total:        S.saldo_total,
-      vl_saldo_revolvente:   S.saldo_revolvente,
-      vl_tasa_anual:         S.tasa_anual,
-      vl_pago_minimo:        S.pago_minimo,
-      vl_pago_real:          S.pago_real,
-      vl_saldo_msi:          S.saldo_msi,
-      vl_meses_msi:          S.meses_restantes_msi,
-      vl_pago_fijo_msi:      r.bloque_c?.pago_fijo_msi || 0,
-      vl_meses_sin_cambio:   r.escenario_igual?.meses_liquidacion,
-      vl_intereses_sin_cambio: r.escenario_igual?.intereses_totales,
-      vl_meses_con_estrategia: r.escenario_optimo?.meses_liquidacion,
-      vl_ahorro_potencial:   r.escenario_optimo?.ahorro_intereses,
-      vl_primera_accion:     r.primera_accion,
-
-      // ── Meta ──
-      source: 'Diagnóstico Vive Ligero',
-      tags: ['lead-magnet', 'diagnostico-vl', `score-${r.vive_ligero_score}`, `nivel-${r.diagnostico_nivel}`]
+      // Campos adicionales
+      vl_descripcion:          r.descripcion_diagnostico,
+      vl_foco_1:               r.focos_rojos?.[0]?.titulo,
+      vl_foco_2:               r.focos_rojos?.[1]?.titulo,
+      vl_foco_3:               r.focos_rojos?.[2]?.titulo,
+      vl_saldo_total:          S.saldo_total,
+      vl_saldo_revolvente:     S.saldo_revolvente,
+      vl_tasa_anual:           S.tasa_anual,
+      vl_pago_real:            S.pago_real,
+      vl_saldo_msi:            S.saldo_msi,
+      vl_meses_msi:            S.meses_restantes_msi,
+      vl_pago_fijo_msi:        r.bloque_c?.pago_fijo_msi || 0,
+      vl_meses_sin_cambio:     r.escenario_igual?.meses_liquidacion,
+      vl_ahorro_potencial:     r.escenario_optimo?.ahorro_intereses,
+      vl_primera_accion:       r.primera_accion,
     };
 
-    await fetch(GHL_WEBHOOK, {
+    await fetch('/api/ghl', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-  } catch (e) { console.warn('GHL webhook error:', e); }
+  } catch (e) { console.warn('GHL error:', e); }
 }
 
 function goToPlan() {
@@ -1079,4 +1069,3 @@ function goToPlan() {
 </script>
 </body>
 </html>
- 
