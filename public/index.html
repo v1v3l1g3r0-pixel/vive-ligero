@@ -795,6 +795,7 @@ TOXICIDAD (20%):
   < 25% → 90 | 25–40% → 70 | 40–60% → 50 | ≥ 60% → 25
 
 SCORE = round((liq×0.30)+(ef×0.25)+(esp×0.25)+(tox×0.20))
+CRÍTICO: El score debe ser EXACTAMENTE el resultado de esa fórmula. NO lo ajustes, NO lo redondees diferente, NO apliques penalizaciones adicionales por MSI u otras razones. Si los índices dan 40, el score es 40.
 80–100=Estructura Sana | 60–79=Fricción Financiera | 40–59=Drenaje de Liquidez | 0–39=Trampa de Deuda
 
 PASO 4 — COSTO DE NO ENTENDER:
@@ -814,7 +815,8 @@ PASO 5 — FOCOS ROJOS (evalúa todos, selecciona los 3 más graves):
   F7:  ratio_uso_linea > 0.80
   F8:  saldo_msi > 0 Y saldo_revolvente > 0 Y pct_capacidad_en_msi > 50%
        → título: "Tus MSI comprometen tu capacidad de pagar el revolvente"
-       → que_pasa: Explica que pago_fijo_msi consume X% de su capacidad de pago
+       → que_pasa: "Los MSI consumen ${pago_fijo_msi > 0 ? Math.round(pago_fijo_msi/35000*100) : pct}% de tu capacidad de pago mensual — $${pago_fijo_msi}/mes de $${S.capacidad_pago}/mes disponibles quedan comprometidos en MSI"
+       → IMPORTANTE: en que_pasa NO uses la palabra "undefined". Usa los números reales: pago_fijo_msi=${pago_fijo_msi}, capacidad_pago_bruta=${S.capacidad_pago}, pct_capacidad_en_msi=${pago_fijo_msi > 0 && S.capacidad_pago > 0 ? Math.round(pago_fijo_msi/S.capacidad_pago*100) : 0}%
        → consecuencia: Mientras los MSI estén activos, el revolvente difícilmente baja
   F9:  estres_financiero ≥ 8
   F10: pago_actual / saldo_total < 0.03
@@ -822,37 +824,36 @@ PASO 5 — FOCOS ROJOS (evalúa todos, selecciona los 3 más graves):
 PASO 6 — ESCENARIOS CON AMORTIZACIÓN REAL:
 
 DATOS BASE:
+  pago_actual              = ${S.pago_real || 0} (lo que realmente paga el usuario)
   pago_fijo_msi            = ${pago_fijo_msi}
   capacidad_disponible_real = ${capacidad_disponible}
 
-ESCENARIO 1 — Si todo sigue igual (pago_actual sobre saldo_revolvente):
+ESCENARIO 1 — Si todo sigue igual:
+CRÍTICO: El escenario 1 usa pago_actual = ${S.pago_real || 0} aplicado AL SALDO REVOLVENTE.
+NO consideres la capacidad disponible para este escenario — el usuario ya está pagando ese monto.
   saldo = saldo_revolvente
   Para cada mes n (máx 360):
     interes_n  = saldo × tasa_mensual
     capital_n  = pago_actual − interes_n
-    Si capital_n ≤ 0: deuda crece → meses = 999, intereses = "indefinido", detén
+    Si capital_n ≤ 0: SOLO entonces deuda crece → meses = 999, detén
     saldo      = saldo − capital_n
     acum_int  += interes_n
     Si saldo ≤ 0: meses_1 = n, detén
   intereses_totales_1 = acum_int
-  presion: ratio_liquidez > 1.3→"Alta" | 1.0–1.3→"Media-alta" | 0.7–1.0→"Media" | <0.7→"Baja"
+  presion: basada en ratio de pago_actual vs capacidad_pago_bruta (no disponible):
+    pago_actual/capacidad_pago_bruta > 1.3→"Alta" | 1.0–1.3→"Media-alta" | 0.7–1.0→"Media" | <0.7→"Baja"
 
 ESCENARIO 2 — Con estrategia óptima:
-  pago_optimo = capacidad_disponible_real
-  Si pago_optimo ≤ saldo_revolvente × tasa_mensual:
-    pago_optimo = saldo_revolvente × tasa_mensual × 1.1
-    (mínimo para que la deuda no crezca + 10%)
-  Simula igual que escenario 1 con pago_optimo:
-    saldo = saldo_revolvente
-    Para cada mes n:
-      interes_n  = saldo × tasa_mensual
-      capital_n  = pago_optimo − interes_n
-      saldo      = saldo − capital_n
-      acum_int  += interes_n
-      Si saldo ≤ 0: meses_2 = n, detén
-  ahorro_intereses     = intereses_totales_1 − acum_int
+  pago_optimo = capacidad_disponible_real (lo que queda después de MSI)
+  Si capacidad_disponible_real = 0 o es negativo:
+    → meses_liquidacion = 999 (no posible mientras MSI activos)
+    → nota_msi: explica que con $${pago_fijo_msi}/mes en MSI y $${S.capacidad_pago}/mes de capacidad, no hay margen para el revolvente hasta que terminen los MSI en ${S.meses_restantes_msi} meses
+  Si capacidad_disponible_real > 0:
+    Si pago_optimo ≤ saldo_revolvente × tasa_mensual:
+      pago_optimo = saldo_revolvente × tasa_mensual × 1.1
+    Simula igual que escenario 1 con pago_optimo
+  ahorro_intereses     = intereses_totales_1 − intereses_escenario_2
   liquidez_recuperada  = pago_actual − pago_optimo
-  (negativo = usuario necesita pagar MÁS para optimizar, no menos — sé honesto)
 
 IMPORTANTE SOBRE MSI EN ESCENARIOS:
   Si pago_fijo_msi > 0: incluye en la descripción del escenario que
