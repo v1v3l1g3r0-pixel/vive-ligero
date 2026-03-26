@@ -775,29 +775,39 @@ function animateLoading() {
 function buildPrompt() {
   const d = S;
 
-  // Pre-cálculos en el cliente
-  const pagos_realizados  = d.pago_real || 0;
-  const pago_fijo_msi     = (d.saldo_msi > 0 && d.meses_restantes_msi > 0)
+  // ── Pre-cálculos con lógica correcta de MSI ─────────────────────────────
+  // REGLA FUNDAMENTAL: pagos_realizados YA INCLUYE el pago de MSI.
+  // El modelo debe descomponer: pago_real = pago_MSI + lo_que_queda_para_revolvente
+  const pagos_realizados = d.pago_real || 0;
+  const pago_fijo_msi    = (d.saldo_msi > 0 && d.meses_restantes_msi > 0)
     ? Math.round(d.saldo_msi / d.meses_restantes_msi)
     : (d.saldo_msi > 0 ? Math.round(d.saldo_msi * 0.05) : 0);
+  // Lo que realmente queda para el revolvente después de cubrir MSI
+  const pago_a_revolvente = Math.max(0, pagos_realizados - pago_fijo_msi);
+  // Déficit: si el pago no alcanza ni para los MSI
+  const deficit_msi = pagos_realizados < pago_fijo_msi ? pago_fijo_msi - pagos_realizados : 0;
+  // Capacidad máxima disponible para revolvente (si maximizara su pago)
   const capacidad_disponible = d.capacidad_pago > 0
     ? Math.max(0, d.capacidad_pago - pago_fijo_msi) : 0;
-  const ratio_msi   = d.saldo_total > 0 ? (d.saldo_msi / d.saldo_total) : 0;
-  const factor_msi  = ratio_msi < 0.20 ? 1.15 : ratio_msi <= 0.40 ? 1.25 : 1.35;
+  const ratio_msi        = d.saldo_total > 0 ? (d.saldo_msi / d.saldo_total) : 0;
+  const factor_msi       = ratio_msi < 0.20 ? 1.15 : ratio_msi <= 0.40 ? 1.25 : 1.35;
   const estructura_hibrida = d.saldo_msi > 0 && d.saldo_revolvente > 0;
-  const pct_msi_cap = d.capacidad_pago > 0 ? Math.round(pago_fijo_msi / d.capacidad_pago * 100) : 0;
+  const pct_msi_pago     = pagos_realizados > 0 ? Math.round(pago_fijo_msi / pagos_realizados * 100) : 0;
+  const pct_msi_cap      = d.capacidad_pago > 0 ? Math.round(pago_fijo_msi / d.capacidad_pago * 100) : 0;
 
   const bloqueA = d.files && d.files.length > 0
-    ? `El usuario subió ${d.files.length} archivo(s). Extrae de ellos: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, iva_intereses, comisiones, pagos_realizados, saldo_promedio_diario, cargos_nuevos, fecha_corte, fecha_pago, linea_credito.
+    ? `El usuario subió ${d.files.length} archivo(s). Extrae: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, cargos_nuevos, linea_credito.
 
-DATOS DEL CUESTIONARIO (ya capturados, úsalos tal cual):
-- pagos_realizados / pago_real: ${pagos_realizados}
+DATOS DEL CUESTIONARIO (úsalos tal cual):
+- pagos_realizados: ${pagos_realizados} — TOTAL que paga al mes, INCLUYE los MSI dentro de ese monto
 - capacidad_pago_real: ${d.capacidad_pago}
 - meses_restantes_msi: ${d.meses_restantes_msi}
 - pago_fijo_msi (pre-calc): ${pago_fijo_msi}
-- capacidad_disponible_real (pre-calc): ${capacidad_disponible}
+- pago_a_revolvente (pre-calc): ${pago_a_revolvente} ← lo que sobra de pagos_realizados después de cubrir MSI
+- deficit_msi (pre-calc): ${deficit_msi} ← cuánto le falta al pago para cubrir siquiera los MSI
+- capacidad_disponible_si_maximiza (pre-calc): ${capacidad_disponible}
 
-Una vez extraído saldo_msi del archivo, recalcula pago_fijo_msi y capacidad_disponible_real.`
+Tras extraer saldo_msi del archivo, recalcula pago_fijo_msi, pago_a_revolvente y deficit_msi.`
     : `DATOS DE LA TARJETA:
 - saldo_total: ${d.saldo_total||'no disponible'}
 - saldo_revolvente: ${d.saldo_revolvente||'no disponible'}
@@ -808,12 +818,15 @@ Una vez extraído saldo_msi del archivo, recalcula pago_fijo_msi y capacidad_dis
 - pago_no_intereses: ${d.pago_no_intereses||'no disponible'}
 - tasa_anual: ${d.tasa_anual||'DEFAULT 45%'}
 - cat: ${d.cat||'no disponible'}
-- intereses_mes: ${d.intereses_mes||`estimar: saldo_revolvente × (tasa_anual/12)`}
+- intereses_mes: ${d.intereses_mes||'estimar: saldo_revolvente × (tasa_anual/12/100)'}
 - cargos_nuevos: ${d.cargos_nuevos||0}
 - linea_credito: ${d.linea_credito||'no disponible'}
 - ratio_msi (pre-calc): ${ratio_msi.toFixed(3)}
 - estructura_hibrida: ${estructura_hibrida}
-- capacidad_disponible_real (pre-calc): ${capacidad_disponible}`;
+- pago_a_revolvente (pre-calc): ${pago_a_revolvente} ← lo que sobra para revolvente después de MSI
+- deficit_msi (pre-calc): ${deficit_msi} ← déficit si pago no cubre ni los MSI
+- pct_msi_sobre_pago: ${pct_msi_pago}% ← qué % del pago real se va a MSI
+- capacidad_disponible_si_maximiza (pre-calc): ${capacidad_disponible}`;
 
   return `Eres un analista financiero especializado en deuda de tarjetas de crédito.
 Tu función: interpretar la estructura de la deuda, explicar qué está pasando de forma humana, conectar montos con significado, detectar focos rojos, y traducir todo en claridad accionable.
@@ -826,7 +839,7 @@ ${bloqueA}
 
 CONTEXTO DEL USUARIO:
 - nombre: ${d.nombre}
-- pagos_realizados (lo que paga realmente): ${pagos_realizados}
+- pagos_realizados: ${pagos_realizados} ← TOTAL mensual que paga (YA INCLUYE los MSI dentro)
 - capacidad_pago_real: ${d.capacidad_pago||'no disponible → estimar: pago_minimo × 1.5'}
 - tipo_pago_habitual: ${d.tipo_pago}
 - usa_tarjeta_mensual: ${d.usa_tarjeta}
@@ -840,39 +853,56 @@ INSTRUCCIONES DE CÁLCULO
 
 PASO 1 — NORMALIZACIÓN:
 - Si falta tasa_anual → usa 45% anual
-- Si falta intereses_mes → intereses_estimados = saldo_revolvente × (tasa_anual/12/100)
-- Si falta capacidad_pago_real → usa pagos_realizados o pago_minimo × 1.5
-- Si falta linea_credito → omite ratio_uso_linea
-- Si falta CAT → no lo uses en toxicidad
-- tasa_mensual = tasa_anual / 12 (en proporción, ej: 45/12 = 3.75%)
+- Si falta intereses_mes → estimar: saldo_revolvente × (tasa_anual/12/100)
+- Si falta capacidad_pago_real → usar pagos_realizados o pago_minimo × 1.5
+- Si falta linea_credito → omitir ratio_uso_linea
+- Si falta CAT → no usar en toxicidad
 
-PASO 2 — CÁLCULOS BASE:
+PASO 2 — DESCOMPOSICIÓN DEL PAGO REAL (CRÍTICO):
+REGLA: pagos_realizados = ${pagos_realizados} es el TOTAL que el usuario paga cada mes.
+Este monto ya incluye el pago de MSI. No lo sumes de nuevo.
+
   tasa_mensual = tasa_anual / 12 / 100
-  pago_fijo_msi = ${pago_fijo_msi} (pre-calculado: saldo_msi / meses_restantes_msi, o saldo_msi × 0.05 si no hay meses)
-  pago_total_comprometido = pagos_realizados + pago_fijo_msi
+  pago_fijo_msi = ${pago_fijo_msi}
+  pago_a_revolvente = pagos_realizados − pago_fijo_msi = ${pago_a_revolvente}
+    (lo que realmente queda para atacar el saldo revolvente)
+
+  CASOS POSIBLES:
+  A) pago_a_revolvente > 0 → el pago cubre los MSI y le queda algo para el revolvente
+  B) pago_a_revolvente = 0 → el pago apenas cubre los MSI, nada va al revolvente
+  C) deficit_msi = ${deficit_msi} > 0 → el pago no alcanza ni para cubrir los MSI
+
+  Identifica cuál caso aplica y refléjalo en el diagnóstico y los focos.
+
+PASO 3 — CÁLCULOS BASE:
+  pago_total_comprometido = pagos_realizados = ${pagos_realizados}
+    (NO sumas MSI encima — ya están incluidos)
   ratio_liquidez = pago_total_comprometido / capacidad_pago_real
-  ratio_interes_pago = intereses_mes / pagos_realizados
+  ratio_interes_pago = intereses_mes / pago_a_revolvente
+    (los intereses se comparan contra lo que realmente va al revolvente, no el pago total)
   ratio_revolvente = saldo_revolvente / saldo_total
-  ratio_msi = ${ratio_msi.toFixed(3)} (pre-calculado)
+  ratio_msi = ${ratio_msi.toFixed(3)}
   ratio_uso_linea = saldo_total / linea_credito (solo si existe)
   estructura_hibrida = ${estructura_hibrida}
 
-PASO 3 — 4 ÍNDICES (0–100, mayor = mejor):
+PASO 4 — 4 ÍNDICES (0–100, mayor = mejor):
 
 ÍNDICE 1 — Presión de Liquidez (peso 30%):
-  ratio_liquidez = pago_total_comprometido / capacidad_pago_real
+  ratio_liquidez = pagos_realizados / capacidad_pago_real
   < 0.70 → score 90 (presión BAJA)
   0.70–1.00 → score 70 (presión MEDIA)
   1.00–1.30 → score 50 (presión MEDIA-ALTA)
   ≥ 1.30 → score 25 (presión ALTA)
   NIVEL VISIBLE: score 90→"Baja" | 70→"Media" | 50→"Media-alta" | 25→"Alta"
-  REGLA: score bajo = presión ALTA. Usa el nivel de presión, no el nivel del score.
+  EXPLICACIÓN: cuánto del flujo se va a la tarjeta en total, integrando MSI
+  Si deficit_msi > 0 → presión SIEMPRE = Alta (score = 25)
 
 ÍNDICE 2 — Qué tanto el pago reduce la deuda (peso 25%):
-  ratio_interes_pago = intereses_mes / pagos_realizados
+  ratio_interes_pago = intereses_mes / pago_a_revolvente
+  Si pago_a_revolvente = 0 → score = 0 (nada va al revolvente)
   < 0.15 → score 90 | 0.15–0.30 → score 70 | 0.30–0.50 → score 50 | ≥ 0.50 → score 25
-  NIVEL: score 90→"Bien" | 70→"Aceptable" | 50→"Poco" | 25→"Muy poco"
-  EXPLICACIÓN: "De los $X que pagas, $Y se van a intereses (Z%)"
+  NIVEL: score 90→"Bien" | 70→"Aceptable" | 50→"Poco" | 25→"Muy poco" | 0→"Nada"
+  EXPLICACIÓN: "De los $${pagos_realizados} que pagas, $${pago_fijo_msi} van a MSI y $${pago_a_revolvente} al revolvente. De ese monto, $Y se van a intereses."
 
 ÍNDICE 3 — Riesgo de que la deuda se alargue (peso 25%):
   Empieza en 90 y resta:
@@ -884,10 +914,11 @@ PASO 3 — 4 ÍNDICES (0–100, mayor = mejor):
   saldo_msi > 0 → −10
   ratio_msi > 0.30 → −15
   saldo_msi > 0 y saldo_revolvente > 0 → −25 adicional
+  pago_a_revolvente = 0 → −20 adicional (nada ataca el revolvente)
   Score mínimo = 0
   NIVEL: 70–90→"Bajo" | 40–69→"Medio" | 0–39→"Alto"
 
-ÍNDICE 4 — Toxicidad (peso 20%, SOLO USO INTERNO — no mostrar al usuario):
+ÍNDICE 5 — Toxicidad (peso 20%, SOLO INTERNO — no mostrar):
   Empieza en 90, resta:
   tasa < 25% → 0 | 25–40% → −15 | 40–60% → −35 | ≥ 60% → −50
   CAT > 60% → −15 | CAT > 80% → −25
@@ -899,65 +930,69 @@ NIVEL DE CONTROL = round(liq×0.30 + reduccion×0.25 + alargamiento×0.25 + toxi
 CRÍTICO: Usa exactamente esa fórmula. No ajustes el score.
 80–100=Estructura Sana | 60–79=Fricción Financiera | 40–59=Drenaje de Liquidez | 0–39=Trampa de Deuda
 
-PASO 4 — COSTO DE NO ENTENDER:
+PASO 5 — COSTO DE NO ENTENDER:
   intereses_12m = saldo_revolvente × tasa_mensual × 12
-  factor_msi = ${factor_msi} (según ratio_msi = ${ratio_msi.toFixed(2)})
+  factor_msi = ${factor_msi} (ratio_msi = ${ratio_msi.toFixed(2)})
   intereses_12m_ajustados = intereses_12m × factor_msi
   costo_no_entender = intereses_12m_ajustados × 0.40
-  Preséntalo como estimación, no como cifra exacta.
+  Presenta como estimación, no cifra exacta.
 
-PASO 5 — NARRATIVA CENTRAL (obligatorio, 3 bullets máx):
-  Sintetiza el problema real. Prueba: ¿lo entendería en 5 segundos?
-  Si hay estructura_hibrida, uno de los bullets DEBE mencionar los MSI.
-  Formato: frases cortas y directas, sin tecnicismos.
+PASO 6 — NARRATIVA CENTRAL (3 bullets máx, obligatorio):
+  Sintetiza el problema real. ¿Lo entendería en 5 segundos?
+  Si estructura_hibrida: un bullet DEBE explicar que los MSI consumen parte del pago real.
+  Formato clave: "De tus $${pagos_realizados}/mes, $${pago_fijo_msi} ya están comprometidos en MSI."
+  ${deficit_msi > 0 ? `CRÍTICO: el pago actual de $${pagos_realizados} no alcanza ni para cubrir los MSI de $${pago_fijo_msi}. Esto debe reflejarse en los bullets.` : ''}
 
-PASO 6 — 12 FOCOS ROJOS (detecta todos, muestra los 3 más graves):
-  F1:  pago_total_comprometido > capacidad_pago_real → "Estás pagando más de lo que tu flujo soporta"
+PASO 7 — 12 FOCOS ROJOS (detecta todos, muestra los 3 más graves):
+  F1:  pagos_realizados > capacidad_pago_real → "Estás pagando más de lo que tu flujo soporta"
   F2:  pagos_realizados ≈ pago_minimo (±5%) → "Estás atrapado en el pago mínimo"
   F3:  tipo_pago = "total" y usa_tarjeta = "si" → "Pagas disciplinadamente... pero la deuda no desaparece"
   F4:  ratio_interes_pago > 0.40 → "Gran parte de tu pago se está perdiendo en intereses"
   F5:  tasa_anual > 40 → "Tu tarjeta es financieramente agresiva"
   F6:  cat > 60 → "El costo real de tu tarjeta es mayor de lo que parece"
   F7:  ratio_uso_linea > 0.80 → "Estás usando casi toda tu línea de crédito"
-  F8:  estructura_hibrida y pct_msi > 30% → "Estás mezclando meses sin intereses con deuda cara" (prioridad alta si pct_msi > ${pct_msi_cap}%)
-  F9:  pagos_realizados / saldo_total < 0.03 → "Tu pago es demasiado pequeño para el tamaño de tu deuda"
-  F10: ratio_interes_pago > 0.80 → "Estás pagando... pero la deuda prácticamente no se mueve"
+  F8:  estructura_hibrida y pct_msi_pago > 30% → "Estás mezclando meses sin intereses con deuda cara"
+       Si deficit_msi > 0: título especial → "Tus MSI consumen más de lo que pagas — el revolvente no baja nada"
+  F9:  pago_a_revolvente / saldo_revolvente < 0.02 → "Tu pago al revolvente es demasiado pequeño"
+  F10: pago_a_revolvente = 0 → "Nada de tu pago mensual está atacando la deuda con intereses"
   F11: usa_tarjeta = "si" y saldo_revolvente > 0 → "La tarjeta sigue activa mientras hay deuda"
   F12: estres_financiero >= 8 → "Tu nivel de estrés financiero es alto"
 
-  Prioridad: liquidez inmediata > alto costo > prolonga la deuda > ciclo activo > bienestar
-  Si estructura_hibrida y F8 aplica → dale prioridad alta.
-  Cada foco: titulo + que_pasa (con $monto + proporción + significado) + por_que_importa + consecuencia.
+  Prioridad: liquidez > costo alto > prolonga deuda > ciclo activo > bienestar
+  Si deficit_msi > 0 → F8/F10 son automáticamente los más graves.
+  En que_pasa usa siempre: monto + proporción + significado.
 
-PASO 7 — ESCENARIOS:
+PASO 8 — ESCENARIOS:
 
-Escenario 1 (si todo sigue igual) — amortización real sobre saldo_revolvente:
-  Para cada mes: interes = saldo × tasa_mensual | capital = pagos_realizados − interes
-  Si capital ≤ 0 → meses = 999 (deuda crece)
-  Suma intereses hasta liquidar. Nota el impacto de los MSI en el flujo.
+Escenario 1 (si todo sigue igual):
+  Amortización sobre saldo_revolvente usando pago_a_revolvente = ${pago_a_revolvente}
+  Para cada mes: interes = saldo × tasa_mensual | capital = pago_a_revolvente − interes
+  Si capital ≤ 0 o pago_a_revolvente = 0 → meses = 999 (deuda no baja)
+  ${deficit_msi > 0 ? `CASO ESPECIAL: el pago actual ni cubre los MSI — meses = 999 automáticamente.` : ''}
   presion: ratio_liquidez > 1.3→"Alta" | 1.0–1.3→"Media-alta" | 0.7–1.0→"Media" | <0.7→"Baja"
-  efecto: describe en lenguaje humano qué siente el usuario si no cambia nada
+  efecto: describe en lenguaje humano el impacto real
 
-Escenario 2 (ajuste simple):
-  pago_optimo = capacidad_disponible_real = ${capacidad_disponible}
-  Si 0: meses = 999, explicar que los MSI no dejan margen (${d.meses_restantes_msi} meses restantes)
-  Si > 0 y ≤ interés mensual: pago_optimo = interés_mensual × 1.1
-  Simula igual que escenario 1 con pago_optimo.
+Escenario 2 (con ajuste):
+  pago_optimo_revolvente = capacidad_disponible = ${capacidad_disponible}
+    (máximo que podría destinar al revolvente si maximizara su pago total)
+  Si 0: imposible mientras MSI activos (${d.meses_restantes_msi} meses restantes)
+  Si > 0: simula con pago_optimo_revolvente
   ahorro = intereses_1 − intereses_2
-  liquidez_recuperada = pagos_realizados − pago_optimo
-  REGLA: con MSI activos, ajuste inteligente = dejar MSI, parar nuevos gastos, priorizar revolvente.
-  mejora: describe en lenguaje humano qué cambia
+  liquidez_recuperada = pago_a_revolvente − pago_optimo_revolvente
+  REGLA: no recomendar adelantar MSI — sostener MSI + priorizar revolvente.
+  mejora: describe el cambio en lenguaje humano
 
-PASO 8 — PRIMERA ACCIÓN:
-  Una sola acción. Concreta, específica, posible, coherente con el foco más grave.
-  Si estructura_hibrida y pct_msi > 70%: acción enfocada en MSI primero.
-  Si prioridad_usuario está definida, la acción debe alinearse con esa prioridad.
+PASO 9 — PRIMERA ACCIÓN:
+  Una sola acción. Concreta, específica, posible.
+  ${deficit_msi > 0 ? `Caso especial: si el pago no cubre los MSI, la primera acción debe abordar ese déficit primero.` : ''}
+  Si estructura_hibrida y pct_msi_pago > 70%: enfocar en los MSI y no añadir nuevos gastos.
+  Si prioridad_usuario definida: alinear con esa prioridad.
   Máx 2 oraciones. Sin listas.
 
 INSTRUCCIÓN DE CALIDAD FINAL:
-  Antes de responder verifica:
-  1. ¿Entiende el usuario su problema en 15 segundos con solo el score + narrativa + focos?
-  2. Si hay MSI: ¿queda claro que afectan liquidez, velocidad de salida y costo total?
+  1. ¿Entiende el usuario en 15 segundos cuál es su problema?
+  2. ¿Queda claro que los MSI forman parte de su pago real y cuánto le queda para el revolvente?
+  3. Si deficit_msi > 0: ¿queda claro que su pago no alcanza ni para los MSI?
   Si alguna respuesta es NO → reescribe.
 
 ========================================
