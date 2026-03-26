@@ -230,7 +230,7 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height:
 .rh-cost-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.28); margin-bottom: 5px; }
 .rh-cost-num { font-family: 'Nunito', sans-serif; font-size: 30px; font-weight: 700; color: #F0DDD6; letter-spacing: -0.5px; }
 .rh-cost-sub { font-size: 12px; color: rgba(247,243,238,0.3); margin-top: 3px; font-weight: 300; line-height: 1.4; }
-.idx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: var(--carbon); padding: 0 24px 28px; }
+.idx-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--carbon); padding: 0 24px 28px; }
 .idx-card { background: rgba(247,243,238,0.04); border: 1px solid rgba(247,243,238,0.07); border-radius: 10px; padding: 13px 14px; }
 .idx-lbl { font-size: 10px; color: rgba(247,243,238,0.28); letter-spacing: 0.03em; margin-bottom: 5px; font-weight: 300; }
 .idx-val { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 5px; }
@@ -270,7 +270,7 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height:
   .steps-row::after { display: none; }
   .step-item { border-right: none; border-bottom: 1px solid var(--borde); text-align: left; }
   .step-num-wrap { margin: 0 0 14px; }
-  .idx-grid { grid-template-columns: 1fr 1fr; }
+  .idx-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -518,6 +518,15 @@ input[type=range]::-webkit-slider-thumb { appearance: none; width: 20px; height:
         <div class="fg"><label class="flabel">¿Cuánto pagas aproximadamente cada mes a esta tarjeta?</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="pago_real" placeholder="0"></div><div class="form-hint" style="font-size:12px;color:var(--carbon-muted);margin-top:5px">El monto que realmente depositas, no el mínimo ni el total del estado de cuenta.</div></div>
         <div class="fg"><label class="flabel">¿Cuánto puedes pagar cómodamente al mes sin ahogarte?</label><div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="finput" id="capacidad_pago" placeholder="0"></div></div>
         <div class="fg">
+          <label class="flabel">¿Cuál es tu prioridad con esta tarjeta?</label>
+          <div class="pill-group" id="pg-prioridad">
+            <button class="pill" onclick="pill('pg-prioridad','liquidar_rapido',this)">Liquidarla rápido</button>
+            <button class="pill" onclick="pill('pg-prioridad','bajar_cuota',this)">Bajar mi cuota</button>
+            <button class="pill" onclick="pill('pg-prioridad','recuperar_liquidez',this)">Recuperar liquidez</button>
+          </div>
+          <input type="hidden" id="prioridad_usuario">
+        </div>
+        <div class="fg">
           <label class="flabel">¿Cómo describirías tu forma de pago habitual?</label>
           <div class="pill-group" id="pg-tipo_pago">
             <button class="pill" onclick="pill('pg-tipo_pago','total',this)">Pago total</button>
@@ -666,7 +675,7 @@ const S = {
   saldo_total:0, saldo_revolvente:0, saldo_msi:0, meses_restantes_msi:0,
   pago_minimo:0, pago_no_intereses:0, pago_real:0,
   tasa_anual:0, cat:0, intereses_mes:0, cargos_nuevos:0, linea_credito:0,
-  capacidad_pago:0, tipo_pago:'', usa_tarjeta:'', ingreso_tipo:'',
+  capacidad_pago:0, tipo_pago:'', usa_tarjeta:'', ingreso_tipo:'', prioridad_usuario:'',
   estres_financiero:5, resultado:null
 };
 
@@ -702,7 +711,7 @@ function goStep(n) {
 function pill(gid, val, el) {
   document.querySelectorAll('#' + gid + ' .pill').forEach(p => p.classList.remove('on'));
   el.classList.add('on');
-  const m = { 'pg-tipo_pago': 'tipo_pago', 'pg-usa_tarjeta': 'usa_tarjeta', 'pg-ingreso_tipo': 'ingreso_tipo' };
+  const m = { 'pg-tipo_pago': 'tipo_pago', 'pg-usa_tarjeta': 'usa_tarjeta', 'pg-ingreso_tipo': 'ingreso_tipo', 'pg-prioridad': 'prioridad_usuario' };
   if (m[gid]) { document.getElementById(m[gid]).value = val; S[m[gid]] = val; }
 }
 
@@ -743,10 +752,11 @@ function launchAnalysis() {
   S.pago_real           = parseFloat(document.getElementById('pago_real').value) || 0;
   S.capacidad_pago      = parseFloat(document.getElementById('capacidad_pago').value) || 0;
   S.meses_restantes_msi = parseInt(document.getElementById('meses_restantes_msi').value) || 0;
-  S.estres_financiero = parseInt(document.getElementById('estres_financiero').value) || 5;
-  S.tipo_pago  = document.getElementById('tipo_pago').value;
-  S.usa_tarjeta = document.getElementById('usa_tarjeta').value;
-  S.ingreso_tipo = document.getElementById('ingreso_tipo').value;
+  S.estres_financiero   = parseInt(document.getElementById('estres_financiero').value) || 5;
+  S.tipo_pago       = document.getElementById('tipo_pago').value;
+  S.usa_tarjeta     = document.getElementById('usa_tarjeta').value;
+  S.ingreso_tipo    = document.getElementById('ingreso_tipo').value;
+  S.prioridad_usuario = document.getElementById('prioridad_usuario').value;
   if (!S.tipo_pago || !S.usa_tarjeta || !S.ingreso_tipo) { document.getElementById('err3').classList.add('show'); return; }
   document.getElementById('err3').classList.remove('show');
   showView('loading');
@@ -765,97 +775,107 @@ function animateLoading() {
 function buildPrompt() {
   const d = S;
 
-  // Pre-cálculos MSI
-  const pago_fijo_msi = (d.saldo_msi > 0 && d.meses_restantes_msi > 0)
+  // Pre-cálculos en el cliente
+  const pagos_realizados  = d.pago_real || 0;
+  const pago_fijo_msi     = (d.saldo_msi > 0 && d.meses_restantes_msi > 0)
     ? Math.round(d.saldo_msi / d.meses_restantes_msi)
-    : (d.saldo_msi > 0 ? Math.round(d.saldo_msi * 0.05) : 0); // fallback 5% si no hay meses
+    : (d.saldo_msi > 0 ? Math.round(d.saldo_msi * 0.05) : 0);
   const capacidad_disponible = d.capacidad_pago > 0
-    ? Math.max(0, d.capacidad_pago - pago_fijo_msi)
-    : 0;
-  const ratio_msi = d.saldo_total > 0 ? (d.saldo_msi / d.saldo_total) : 0;
-  const factor_msi = ratio_msi < 0.20 ? 1.15 : ratio_msi <= 0.40 ? 1.25 : 1.35;
+    ? Math.max(0, d.capacidad_pago - pago_fijo_msi) : 0;
+  const ratio_msi   = d.saldo_total > 0 ? (d.saldo_msi / d.saldo_total) : 0;
+  const factor_msi  = ratio_msi < 0.20 ? 1.15 : ratio_msi <= 0.40 ? 1.25 : 1.35;
   const estructura_hibrida = d.saldo_msi > 0 && d.saldo_revolvente > 0;
-  const pct_msi_capacidad = d.capacidad_pago > 0 ? Math.round(pago_fijo_msi / d.capacidad_pago * 100) : 0;
+  const pct_msi_cap = d.capacidad_pago > 0 ? Math.round(pago_fijo_msi / d.capacidad_pago * 100) : 0;
 
   const bloqueA = d.files && d.files.length > 0
-    ? `El usuario subió ${d.files.length} archivo(s) con datos de su estado de cuenta.
-EXTRAE de los archivos adjuntos: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, cargos_nuevos, linea_credito, iva_intereses, comisiones, pagos_realizados.
+    ? `El usuario subió ${d.files.length} archivo(s). Extrae de ellos: saldo_total, saldo_revolvente, saldo_msi, pago_minimo, pago_no_intereses, tasa_anual, cat, intereses_mes, iva_intereses, comisiones, pagos_realizados, saldo_promedio_diario, cargos_nuevos, fecha_corte, fecha_pago, linea_credito.
 
-DATOS YA CAPTURADOS EN EL CUESTIONARIO (usa estos tal cual, son datos directos del usuario):
-- pago_real_mensual: ${d.pago_real || 0}
-- capacidad_pago_bruta: ${d.capacidad_pago || 0}
-- meses_restantes_msi: ${d.meses_restantes_msi || 0}
+DATOS DEL CUESTIONARIO (ya capturados, úsalos tal cual):
+- pagos_realizados / pago_real: ${pagos_realizados}
+- capacidad_pago_real: ${d.capacidad_pago}
+- meses_restantes_msi: ${d.meses_restantes_msi}
+- pago_fijo_msi (pre-calc): ${pago_fijo_msi}
+- capacidad_disponible_real (pre-calc): ${capacidad_disponible}
 
-DESPUÉS de extraer saldo_msi de los archivos, recalcula:
-  pago_fijo_msi = saldo_msi / meses_restantes_msi (si meses > 0) o saldo_msi × 0.05 (estimación)
-  capacidad_disponible_real = MAX(0, capacidad_pago_bruta − pago_fijo_msi)`
+Una vez extraído saldo_msi del archivo, recalcula pago_fijo_msi y capacidad_disponible_real.`
     : `DATOS DE LA TARJETA:
-- saldo_total: ${d.saldo_total||'no proporcionado'}
-- saldo_revolvente: ${d.saldo_revolvente||'no proporcionado'}
+- saldo_total: ${d.saldo_total||'no disponible'}
+- saldo_revolvente: ${d.saldo_revolvente||'no disponible'}
 - saldo_msi: ${d.saldo_msi||0}
 - meses_restantes_msi: ${d.meses_restantes_msi||0}
-- pago_fijo_msi (pre-calculado): ${pago_fijo_msi||'0 (sin MSI)'}
-- capacidad_disponible_real (pre-calculada): ${capacidad_disponible}
-- ratio_msi: ${ratio_msi.toFixed(3)}
-- estructura_hibrida: ${estructura_hibrida}
-- pago_minimo: ${d.pago_minimo||'no proporcionado'}
-- pago_no_intereses: ${d.pago_no_intereses||'no proporcionado'}
+- pago_fijo_msi (pre-calc): ${pago_fijo_msi||'no aplica'}
+- pago_minimo: ${d.pago_minimo||'no disponible'}
+- pago_no_intereses: ${d.pago_no_intereses||'no disponible'}
 - tasa_anual: ${d.tasa_anual||'DEFAULT 45%'}
-- cat: ${d.cat||'no proporcionado'}
-- intereses_mes: ${d.intereses_mes||`estimado: saldo_revolvente × (tasa_anual/12)`}
+- cat: ${d.cat||'no disponible'}
+- intereses_mes: ${d.intereses_mes||`estimar: saldo_revolvente × (tasa_anual/12)`}
 - cargos_nuevos: ${d.cargos_nuevos||0}
-- linea_credito: ${d.linea_credito||'no proporcionado'}`;
+- linea_credito: ${d.linea_credito||'no disponible'}
+- ratio_msi (pre-calc): ${ratio_msi.toFixed(3)}
+- estructura_hibrida: ${estructura_hibrida}
+- capacidad_disponible_real (pre-calc): ${capacidad_disponible}`;
 
-  return `Eres un analista financiero especializado en deuda de tarjetas. Tu función es interpretar la estructura de la deuda, explicar qué está pasando de forma humana, conectar montos con significado, identificar focos rojos y traducir todo en claridad accionable.
+  return `Eres un analista financiero especializado en deuda de tarjetas de crédito.
+Tu función: interpretar la estructura de la deuda, explicar qué está pasando de forma humana, conectar montos con significado, detectar focos rojos, y traducir todo en claridad accionable.
 
-REGLA FUNDAMENTAL: dato → traducción → impacto. Nunca dejes números sueltos.
-TONO: claro, directo, ejecutivo, humano, sin juicio, sin tecnicismos innecesarios.
+REGLA FUNDAMENTAL — dato → traducción → impacto. Nunca dejes números sueltos.
+TONO: claro, directo, ejecutivo, humano, sin juicio, sin tecnicismos.
+OBJETIVO: que el usuario diga "Ahora entiendo qué está pasando con mi tarjeta."
 
 ${bloqueA}
 
 CONTEXTO DEL USUARIO:
 - nombre: ${d.nombre}
-- pago_real_mensual: ${d.pago_real||'no proporcionado'}
-- capacidad_pago_bruta: ${d.capacidad_pago||'no proporcionado'}
-- capacidad_disponible_real: ${capacidad_disponible}
+- pagos_realizados (lo que paga realmente): ${pagos_realizados}
+- capacidad_pago_real: ${d.capacidad_pago||'no disponible → estimar: pago_minimo × 1.5'}
 - tipo_pago_habitual: ${d.tipo_pago}
 - usa_tarjeta_mensual: ${d.usa_tarjeta}
 - ingreso_tipo: ${d.ingreso_tipo}
+- prioridad_usuario: ${d.prioridad_usuario||'no especificada'}
 - estres_financiero: ${d.estres_financiero}/10
 
 ========================================
-INSTRUCCIONES — SIGUE ESTE ORDEN EXACTO
+INSTRUCCIONES DE CÁLCULO
 ========================================
 
-PASO 1 — pago_actual:
-  Si pago_real_mensual > 0 → pago_actual = pago_real_mensual (prioridad máxima)
-  Si no: total→pago_no_intereses | minimo→pago_minimo | intermedio→promedio
-  Fallback: pago_actual = pago_minimo
+PASO 1 — NORMALIZACIÓN:
+- Si falta tasa_anual → usa 45% anual
+- Si falta intereses_mes → intereses_estimados = saldo_revolvente × (tasa_anual/12/100)
+- Si falta capacidad_pago_real → usa pagos_realizados o pago_minimo × 1.5
+- Si falta linea_credito → omite ratio_uso_linea
+- Si falta CAT → no lo uses en toxicidad
+- tasa_mensual = tasa_anual / 12 (en proporción, ej: 45/12 = 3.75%)
 
-PASO 2 — Cálculos base:
+PASO 2 — CÁLCULOS BASE:
   tasa_mensual = tasa_anual / 12 / 100
-  pago_total_comprometido = pago_actual + ${pago_fijo_msi} (pago_fijo_msi)
-  ratio_liquidez = pago_total_comprometido / capacidad_pago_bruta
-  ratio_interes_pago = intereses_mes / pago_actual
+  pago_fijo_msi = ${pago_fijo_msi} (pre-calculado: saldo_msi / meses_restantes_msi, o saldo_msi × 0.05 si no hay meses)
+  pago_total_comprometido = pagos_realizados + pago_fijo_msi
+  ratio_liquidez = pago_total_comprometido / capacidad_pago_real
+  ratio_interes_pago = intereses_mes / pagos_realizados
   ratio_revolvente = saldo_revolvente / saldo_total
   ratio_msi = ${ratio_msi.toFixed(3)} (pre-calculado)
-  ratio_uso_linea = saldo_total / linea_credito (si existe)
+  ratio_uso_linea = saldo_total / linea_credito (solo si existe)
   estructura_hibrida = ${estructura_hibrida}
 
-PASO 3 — LOS 4 ÍNDICES (0–100, mayor = mejor control):
+PASO 3 — 4 ÍNDICES (0–100, mayor = mejor):
 
-ÍNDICE 1 — Presión de liquidez (peso 30%):
-  Usa ratio_liquidez = pago_total_comprometido / capacidad_pago_bruta
-  < 0.70 → 90 | 0.70–1.00 → 70 | 1.00–1.30 → 50 | ≥ 1.30 → 25
-  Label visible: "Presión de liquidez"
+ÍNDICE 1 — Presión de Liquidez (peso 30%):
+  ratio_liquidez = pago_total_comprometido / capacidad_pago_real
+  < 0.70 → score 90 (presión BAJA)
+  0.70–1.00 → score 70 (presión MEDIA)
+  1.00–1.30 → score 50 (presión MEDIA-ALTA)
+  ≥ 1.30 → score 25 (presión ALTA)
+  NIVEL VISIBLE: score 90→"Baja" | 70→"Media" | 50→"Media-alta" | 25→"Alta"
+  REGLA: score bajo = presión ALTA. Usa el nivel de presión, no el nivel del score.
 
-ÍNDICE 2 — Qué tanto tu pago reduce la deuda (peso 25%):
-  ratio_interes_pago = intereses_mes / pago_actual
-  < 0.15 → 90 | 0.15–0.30 → 70 | 0.30–0.50 → 50 | ≥ 0.50 → 25
-  Label visible: "Qué tanto tu pago reduce la deuda"
+ÍNDICE 2 — Qué tanto el pago reduce la deuda (peso 25%):
+  ratio_interes_pago = intereses_mes / pagos_realizados
+  < 0.15 → score 90 | 0.15–0.30 → score 70 | 0.30–0.50 → score 50 | ≥ 0.50 → score 25
+  NIVEL: score 90→"Bien" | 70→"Aceptable" | 50→"Poco" | 25→"Muy poco"
+  EXPLICACIÓN: "De los $X que pagas, $Y se van a intereses (Z%)"
 
 ÍNDICE 3 — Riesgo de que la deuda se alargue (peso 25%):
-  Empieza en 90, resta puntos:
+  Empieza en 90 y resta:
   saldo_revolvente > 0 → −20
   cargos_nuevos > 0 y saldo_revolvente > 0 → −25
   usa_tarjeta = "si" con deuda activa → −20
@@ -865,81 +885,85 @@ PASO 3 — LOS 4 ÍNDICES (0–100, mayor = mejor control):
   ratio_msi > 0.30 → −15
   saldo_msi > 0 y saldo_revolvente > 0 → −25 adicional
   Score mínimo = 0
-  Label visible: "Riesgo de que la deuda se alargue"
+  NIVEL: 70–90→"Bajo" | 40–69→"Medio" | 0–39→"Alto"
 
-ÍNDICE 4 — Toxicidad de la estructura (peso 20%):
+ÍNDICE 4 — Toxicidad (peso 20%, SOLO USO INTERNO — no mostrar al usuario):
   Empieza en 90, resta:
-  tasa < 25% → −0 | 25–40% → −15 | 40–60% → −35 | ≥ 60% → −50
+  tasa < 25% → 0 | 25–40% → −15 | 40–60% → −35 | ≥ 60% → −50
   CAT > 60% → −15 | CAT > 80% → −25
   ratio_uso_linea ≥ 0.80 → −20
-  estructura_hibrida = true → −20
+  estructura_hibrida → −20
   Score mínimo = 0
-  Label visible: "Toxicidad de la estructura"
 
 NIVEL DE CONTROL = round(liq×0.30 + reduccion×0.25 + alargamiento×0.25 + toxicidad×0.20)
-CRÍTICO: Usa exactamente esa fórmula. No ajustes el score por ningún motivo.
-80–100 = Estructura Sana | 60–79 = Fricción Financiera | 40–59 = Drenaje de Liquidez | 0–39 = Trampa de Deuda
+CRÍTICO: Usa exactamente esa fórmula. No ajustes el score.
+80–100=Estructura Sana | 60–79=Fricción Financiera | 40–59=Drenaje de Liquidez | 0–39=Trampa de Deuda
 
-PASO 4 — COSTO DE NO ENTENDER TU TARJETA:
+PASO 4 — COSTO DE NO ENTENDER:
   intereses_12m = saldo_revolvente × tasa_mensual × 12
-  Si saldo_msi > 0: factor_msi = ${factor_msi} (según ratio_msi = ${ratio_msi.toFixed(2)})
+  factor_msi = ${factor_msi} (según ratio_msi = ${ratio_msi.toFixed(2)})
   intereses_12m_ajustados = intereses_12m × factor_msi
   costo_no_entender = intereses_12m_ajustados × 0.40
-  IMPORTANTE: usa saldo_revolvente, NO saldo_total. Si ratio_msi = 0, factor_msi = 1.
+  Preséntalo como estimación, no como cifra exacta.
 
-PASO 5 — NARRATIVA CENTRAL (3 bullets máx, obligatorio):
-  Sintetiza el problema real del usuario en ≤3 bullets cortos y directos.
-  Regla: si el usuario leyera solo esto, ¿entendería su problema en 5 segundos?
-  Ejemplo con MSI: ["Estás pagando, pero gran parte se va a intereses", "Tus meses sin intereses también consumen tu flujo", "La deuda baja más lento de lo que debería"]
-  Si hay estructura_hibrida, uno de los bullets DEBE reflejar el impacto de los MSI.
+PASO 5 — NARRATIVA CENTRAL (obligatorio, 3 bullets máx):
+  Sintetiza el problema real. Prueba: ¿lo entendería en 5 segundos?
+  Si hay estructura_hibrida, uno de los bullets DEBE mencionar los MSI.
+  Formato: frases cortas y directas, sin tecnicismos.
 
-PASO 6 — FOCOS ROJOS (detecta todos, muestra los 3 más graves):
-  F1:  pago_total_comprometido > capacidad_pago_bruta → "Estás pagando más de lo que tu flujo soporta"
-  F2:  pago_actual ≈ pago_minimo (±5%) → "Estás atrapado en el pago mínimo"
-  F3:  tipo_pago = "total" Y usa_tarjeta = "si" → "Pagas disciplinadamente... pero la deuda no desaparece"
+PASO 6 — 12 FOCOS ROJOS (detecta todos, muestra los 3 más graves):
+  F1:  pago_total_comprometido > capacidad_pago_real → "Estás pagando más de lo que tu flujo soporta"
+  F2:  pagos_realizados ≈ pago_minimo (±5%) → "Estás atrapado en el pago mínimo"
+  F3:  tipo_pago = "total" y usa_tarjeta = "si" → "Pagas disciplinadamente... pero la deuda no desaparece"
   F4:  ratio_interes_pago > 0.40 → "Gran parte de tu pago se está perdiendo en intereses"
   F5:  tasa_anual > 40 → "Tu tarjeta es financieramente agresiva"
   F6:  cat > 60 → "El costo real de tu tarjeta es mayor de lo que parece"
   F7:  ratio_uso_linea > 0.80 → "Estás usando casi toda tu línea de crédito"
-  F8:  estructura_hibrida y pct_msi > 30% → "Estás mezclando meses sin intereses con deuda cara" (prioridad alta si pct_msi > ${pct_msi_capacidad}%)
-  F9:  pago_actual / saldo_total < 0.03 → "Tu pago es demasiado pequeño para el tamaño de tu deuda"
-  F10: ratio_interes_pago > 0.70 y ratio_revolvente < 0.20 → "Estás pagando... pero la deuda prácticamente no se mueve"
+  F8:  estructura_hibrida y pct_msi > 30% → "Estás mezclando meses sin intereses con deuda cara" (prioridad alta si pct_msi > ${pct_msi_cap}%)
+  F9:  pagos_realizados / saldo_total < 0.03 → "Tu pago es demasiado pequeño para el tamaño de tu deuda"
+  F10: ratio_interes_pago > 0.80 → "Estás pagando... pero la deuda prácticamente no se mueve"
   F11: usa_tarjeta = "si" y saldo_revolvente > 0 → "La tarjeta sigue activa mientras hay deuda"
   F12: estres_financiero >= 8 → "Tu nivel de estrés financiero es alto"
 
-  Cada foco incluye: titulo, que_pasa (con monto + proporción + significado), por_que_importa, consecuencia.
-  REGLA: nunca dejes montos sin explicar. Siempre: "De los $X que pagas, $Y se van a intereses (Z%)".
+  Prioridad: liquidez inmediata > alto costo > prolonga la deuda > ciclo activo > bienestar
+  Si estructura_hibrida y F8 aplica → dale prioridad alta.
+  Cada foco: titulo + que_pasa (con $monto + proporción + significado) + por_que_importa + consecuencia.
 
 PASO 7 — ESCENARIOS:
 
-Escenario 1 (si todo sigue igual):
-  Simula amortización mes a mes sobre saldo_revolvente con pago_actual:
-    interes_n = saldo × tasa_mensual
-    capital_n = pago_actual − interes_n
-    Si capital_n ≤ 0 → meses = 999 (deuda crece)
-    saldo = saldo − capital_n hasta ≤ 0
-  Si hay saldo_msi: reconoce que los MSI siguen comprometiendo ${pago_fijo_msi}/mes del flujo.
-  presion: pago_actual/capacidad_pago_bruta > 1.3→"Alta" | 1.0–1.3→"Media-alta" | 0.7–1.0→"Media" | <0.7→"Baja"
+Escenario 1 (si todo sigue igual) — amortización real sobre saldo_revolvente:
+  Para cada mes: interes = saldo × tasa_mensual | capital = pagos_realizados − interes
+  Si capital ≤ 0 → meses = 999 (deuda crece)
+  Suma intereses hasta liquidar. Nota el impacto de los MSI en el flujo.
+  presion: ratio_liquidez > 1.3→"Alta" | 1.0–1.3→"Media-alta" | 0.7–1.0→"Media" | <0.7→"Baja"
+  efecto: describe en lenguaje humano qué siente el usuario si no cambia nada
 
 Escenario 2 (ajuste simple):
   pago_optimo = capacidad_disponible_real = ${capacidad_disponible}
-  Si pago_optimo ≤ saldo_revolvente × tasa_mensual → pago_optimo = saldo_revolvente × tasa_mensual × 1.1
-  Si capacidad_disponible = 0 → meses = 999, nota: sin margen mientras MSI activos (${d.meses_restantes_msi} meses restantes)
+  Si 0: meses = 999, explicar que los MSI no dejan margen (${d.meses_restantes_msi} meses restantes)
+  Si > 0 y ≤ interés mensual: pago_optimo = interés_mensual × 1.1
   Simula igual que escenario 1 con pago_optimo.
-  ahorro_intereses = intereses_1 − intereses_2
-  liquidez_recuperada = pago_actual − pago_optimo (negativo = necesita pagar más)
-  Con MSI: ajuste inteligente = dejar MSI sin romper, priorizar deuda cara.
+  ahorro = intereses_1 − intereses_2
+  liquidez_recuperada = pagos_realizados − pago_optimo
+  REGLA: con MSI activos, ajuste inteligente = dejar MSI, parar nuevos gastos, priorizar revolvente.
+  mejora: describe en lenguaje humano qué cambia
 
 PASO 8 — PRIMERA ACCIÓN:
   Una sola acción. Concreta, específica, posible, coherente con el foco más grave.
-  Si estructura_hibrida y pct_msi_capacidad > 70%: acción sobre MSI primero.
-  Ejemplo: "Esta semana evita usar esta tarjeta y prioriza reducir la parte que genera intereses, manteniendo tus MSI sin adelantarlos de forma impulsiva."
+  Si estructura_hibrida y pct_msi > 70%: acción enfocada en MSI primero.
+  Si prioridad_usuario está definida, la acción debe alinearse con esa prioridad.
   Máx 2 oraciones. Sin listas.
+
+INSTRUCCIÓN DE CALIDAD FINAL:
+  Antes de responder verifica:
+  1. ¿Entiende el usuario su problema en 15 segundos con solo el score + narrativa + focos?
+  2. Si hay MSI: ¿queda claro que afectan liquidez, velocidad de salida y costo total?
+  Si alguna respuesta es NO → reescribe.
 
 ========================================
 RESPONDE SOLO JSON SIN MARKDOWN:
 ========================================
-{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0,"meses_restantes_msi":0,"pago_fijo_msi":0,"ratio_msi":0,"estructura_hibrida":false},"bloque_c":{"pago_actual":0,"pago_total_comprometido":0,"tasa_mensual":0,"pago_fijo_msi":0,"capacidad_disponible_real":0,"pct_capacidad_en_msi":0,"ratio_liquidez":0,"ratio_interes_pago":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel":"Alto o Medio o Bajo","explicacion":"string con monto y proporción"},"reduccion_deuda":{"score":0,"nivel":"Alto o Medio o Bajo","explicacion":"string con monto y proporción"},"riesgo_alargamiento":{"score":0,"nivel":"Alto o Medio o Bajo","explicacion":"string"},"toxicidad":{"score":0,"nivel":"Alto o Medio o Bajo","explicacion":"string"}},"nivel_control":0,"diagnostico_nivel":"Estructura Sana o Fricción Financiera o Drenaje de Liquidez o Trampa de Deuda","descripcion_diagnostico":"string","costo_no_entender_12m":0,"narrativa_central":["bullet 1","bullet 2","bullet 3"],"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string con monto+proporción+significado","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string","efecto":"string"},"escenario_optimo":{"pago_optimo":0,"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0,"mejora":"string","nota_msi":"string o null"},"primera_accion":"string"}`;
+{"datos_extraidos":{"saldo_total":0,"saldo_revolvente":0,"pago_minimo":0,"pago_no_intereses":0,"tasa_anual":0,"cat":0,"intereses_mes":0,"cargos_nuevos":0,"linea_credito":0,"saldo_msi":0,"meses_restantes_msi":0,"pago_fijo_msi":0,"ratio_msi":0,"estructura_hibrida":false},"bloque_c":{"pagos_realizados":0,"pago_total_comprometido":0,"tasa_mensual":0,"pago_fijo_msi":0,"capacidad_disponible_real":0,"pct_capacidad_en_msi":0,"ratio_liquidez":0,"ratio_interes_pago":0,"ratio_revolvente":0,"ratio_uso_linea":0},"indices":{"liquidez":{"score":0,"nivel_presion":"Alta o Media-alta o Media o Baja","explicacion":"Entre lo que pagas ($X) y tus MSI ($Y), esta tarjeta absorbe $Z/mes — [impacto en el flujo]"},"reduccion_deuda":{"score":0,"nivel":"Bien o Aceptable o Poco o Muy poco","explicacion":"De los $X que pagas, $Y se van a intereses (Z%) — [significado]"},"riesgo_alargamiento":{"score":0,"nivel":"Alto o Medio o Bajo","explicacion":"[explicación humana del riesgo, integrando MSI si aplica]"}},"toxicidad_interna":{"score":0},"nivel_control":0,"diagnostico_nivel":"Estructura Sana o Fricción Financiera o Drenaje de Liquidez o Trampa de Deuda","descripcion_diagnostico":"string — explicación del significado, integrando MSI si aplica","costo_no_entender_12m":0,"narrativa_central":["bullet 1","bullet 2","bullet 3"],"focos_rojos":[{"numero":1,"titulo":"string","que_pasa":"string — monto + proporción + significado","por_que_importa":"string","consecuencia":"string"}],"escenario_igual":{"meses_liquidacion":0,"intereses_totales":0,"presion":"string","efecto":"string — en lenguaje humano"},"escenario_optimo":{"pago_optimo":0,"meses_liquidacion":0,"ahorro_intereses":0,"liquidez_recuperada_mes":0,"mejora":"string — en lenguaje humano","nota_msi":"string o null"},"primera_accion":"string"}`;
 
   return `Actúa como analista financiero especializado en deuda de tarjetas de crédito. Eres el copiloto del usuario: traduces números complejos en decisiones simples. Tono: honesto, calmo, directo, sin juicio.
 
@@ -1120,51 +1144,101 @@ async function callAPI() {
 }
 
 function renderResultado(r) {
-  // Score — ahora se llama nivel_control
+  // Score
   const score = r.nivel_control ?? r.vive_ligero_score;
   document.getElementById('rScore').textContent = score;
   document.getElementById('rDesc').textContent  = r.descripcion_diagnostico;
-  const bMap = { 'Estructura Sana': 'b-verde', 'Fricción Financiera': 'b-amarillo', 'Drenaje de Liquidez': 'b-naranja', 'Trampa de Deuda': 'b-rojo' };
-  const eMap = { 'Estructura Sana': '🟢', 'Fricción Financiera': '🟡', 'Drenaje de Liquidez': '🟠', 'Trampa de Deuda': '🔴' };
+  const bMap = { 'Estructura Sana':'b-verde','Fricción Financiera':'b-amarillo','Drenaje de Liquidez':'b-naranja','Trampa de Deuda':'b-rojo' };
+  const eMap = { 'Estructura Sana':'🟢','Fricción Financiera':'🟡','Drenaje de Liquidez':'🟠','Trampa de Deuda':'🔴' };
   const bEl = document.getElementById('rBadge');
   bEl.className = 'rh-badge ' + (bMap[r.diagnostico_nivel] || 'b-naranja');
   bEl.textContent = (eMap[r.diagnostico_nivel] || '🟠') + ' ' + r.diagnostico_nivel;
   document.getElementById('rCost').textContent = fmt(r.costo_no_entender_12m);
 
-  // Indicadores — nuevos nombres del documento
-  const iK = [
-    { k: 'liquidez',           l: 'Presión de liquidez' },
-    { k: 'reduccion_deuda',    l: 'Qué tanto tu pago reduce la deuda' },
-    { k: 'riesgo_alargamiento',l: 'Riesgo de que se alargue' },
-    { k: 'toxicidad',          l: 'Toxicidad de la estructura' }
-  ];
-  const normalizeNivel = (n) => {
-    if (!n) return null;
-    const s = n.toLowerCase();
+  // 3 INDICADORES VISIBLES — toxicidad es solo interna
+  // Presión de liquidez: nivel_presion = "Alta/Media-alta/Media/Baja" (semántica de presión, no de score)
+  // Reducción deuda: nivel = "Bien/Aceptable/Poco/Muy poco"
+  // Riesgo alargamiento: nivel = "Alto/Medio/Bajo"
+  const colorPresion  = { 'Alta':'iv-alto','Media-alta':'iv-medio','Media':'iv-medio','Baja':'iv-bajo' };
+  const colorReduccion = { 'Bien':'iv-bajo','Aceptable':'iv-medio','Poco':'iv-medio','Muy poco':'iv-alto' };
+  const colorRiesgo    = { 'Alto':'iv-alto','Medio':'iv-medio','Bajo':'iv-bajo' };
+
+  const idx = r.indices || {};
+
+  // Normalizar nivel_presion — puede venir como Alto/Bajo (bug anterior) o Alta/Baja (correcto)
+  const rawPresion = idx.liquidez?.nivel_presion || idx.liquidez?.nivel || '';
+  const normPresion = (() => {
+    const s = rawPresion.toLowerCase();
+    if (s.includes('media-alta') || s.includes('media alta')) return 'Media-alta';
+    if (s.includes('media')) return 'Media';
+    // CRÍTICO: si el score es bajo (25/50), la presión es Alta — invertir si viene mal
+    if (s.startsWith('alt') || s.startsWith('alto')) return 'Alta';
+    if (s.startsWith('baj') || s.startsWith('bajo')) return 'Baja';
+    // Fallback basado en score
+    const sc = idx.liquidez?.score || 70;
+    return sc >= 80 ? 'Baja' : sc >= 60 ? 'Media' : sc >= 40 ? 'Media-alta' : 'Alta';
+  })();
+
+  const rawReduccion = idx.reduccion_deuda?.nivel || '';
+  const normReduccion = (() => {
+    const s = rawReduccion.toLowerCase();
+    if (s.includes('muy') || s.includes('poco')) return 'Muy poco';
+    if (s.includes('poco')) return 'Poco';
+    if (s.includes('acep')) return 'Aceptable';
+    if (s.includes('bien') || s.startsWith('baj')) return 'Bien';
+    const sc = idx.reduccion_deuda?.score || 70;
+    return sc >= 80 ? 'Bien' : sc >= 60 ? 'Aceptable' : sc >= 40 ? 'Poco' : 'Muy poco';
+  })();
+
+  const rawRiesgo = idx.riesgo_alargamiento?.nivel || '';
+  const normRiesgo = (() => {
+    const s = rawRiesgo.toLowerCase();
     if (s.startsWith('alt')) return 'Alto';
     if (s.startsWith('med')) return 'Medio';
     if (s.startsWith('baj')) return 'Bajo';
-    return 'Medio';
-  };
-  const nC = { Alto: 'iv-alto', Medio: 'iv-medio', Bajo: 'iv-bajo' };
-  const nT = { Alto: 'Alta', Medio: 'Media', Bajo: 'Baja' };
-  document.getElementById('rIndices').innerHTML = iK.map(i => {
-    const idx   = r.indices?.[i.k];
-    const nivel = normalizeNivel(idx?.nivel);
-    const expl  = idx?.explicacion || '';
-    return `<div class="idx-card" title="${expl}">
-      <div class="idx-lbl">${i.l}</div>
-      <div class="idx-val ${nC[nivel] || 'iv-medio'}"><div class="idx-dot"></div>${nT[nivel] || '—'}</div>
-    </div>`;
-  }).join('');
+    const sc = idx.riesgo_alargamiento?.score || 70;
+    return sc >= 70 ? 'Bajo' : sc >= 40 ? 'Medio' : 'Alto';
+  })();
 
-  // Narrativa central — nueva sección "Lo que está pasando"
+  const indicadores = [
+    {
+      label: 'Presión de liquidez',
+      nivel: normPresion,
+      color: colorPresion[normPresion] || 'iv-medio',
+      expl:  idx.liquidez?.explicacion || ''
+    },
+    {
+      label: 'Qué tanto tu pago reduce la deuda',
+      nivel: normReduccion,
+      color: colorReduccion[normReduccion] || 'iv-medio',
+      expl:  idx.reduccion_deuda?.explicacion || ''
+    },
+    {
+      label: 'Riesgo de que la deuda se alargue',
+      nivel: normRiesgo,
+      color: colorRiesgo[normRiesgo] || 'iv-medio',
+      expl:  idx.riesgo_alargamiento?.explicacion || ''
+    }
+  ];
+
+  document.getElementById('rIndices').innerHTML = indicadores.map(i => `
+    <div class="idx-card" title="${i.expl}">
+      <div class="idx-lbl">${i.label}</div>
+      <div class="idx-val ${i.color}"><div class="idx-dot"></div>${i.nivel}</div>
+      ${i.expl ? `<div style="font-size:11px;color:rgba(247,243,238,0.35);margin-top:5px;line-height:1.4;font-weight:300">${i.expl}</div>` : ''}
+    </div>`).join('');
+
+  // Narrativa central
   const narrativa = r.narrativa_central || [];
-  document.getElementById('rNarrativa').innerHTML = narrativa.length
-    ? narrativa.map(b => `<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--borde);font-size:14px;color:var(--carbon-soft);line-height:1.55">
-        <div style="width:6px;height:6px;background:var(--terracota);border-radius:50%;flex-shrink:0;margin-top:6px"></div>
+  const narEl = document.getElementById('rNarrativa');
+  narEl.innerHTML = narrativa.length
+    ? narrativa.map((b, i) => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;
+        ${i < narrativa.length-1 ? 'border-bottom:1px solid var(--borde);' : ''}
+        font-size:14px;color:var(--carbon-soft);line-height:1.6">
+        <div style="width:6px;height:6px;background:var(--terracota);border-radius:50%;flex-shrink:0;margin-top:7px"></div>
         <span>${b}</span>
-      </div>`).join('').replace(/border-bottom[^;]+;(?=<\/div>\s*$)/, '')
+      </div>`).join('')
     : '<p style="color:var(--carbon-muted);font-size:14px;margin:0">—</p>';
 
   // Focos rojos
@@ -1174,8 +1248,7 @@ function renderResultado(r) {
       <div class="foco-head"><div class="foco-ico">${ico}</div><div class="foco-title">${f.titulo}</div></div>
       <div class="foco-body">${f.que_pasa}<br><br>${f.por_que_importa}</div>
       <div class="foco-consec">Consecuencia: ${f.consecuencia}</div>
-    </div>`
-  ).join('');
+    </div>`).join('');
 
   // Alerta MSI
   const notaMsi = r.escenario_optimo?.nota_msi;
@@ -1184,7 +1257,7 @@ function renderResultado(r) {
     const alertaEl = document.getElementById('msi-alerta');
     alertaEl.style.display = 'block';
     document.getElementById('msi-alerta-texto').textContent =
-      notaMsi || `Tienes ${fmt(pagoMsi)}/mes comprometidos en MSI — descontado de tu capacidad disponible en los escenarios.`;
+      notaMsi || `Tienes ${fmt(pagoMsi)}/mes comprometidos en MSI — ya descontado de tu capacidad disponible.`;
   }
 
   // Escenarios
@@ -1197,8 +1270,8 @@ function renderResultado(r) {
   document.getElementById('e2pago').textContent      = fmt(r.escenario_optimo?.pago_optimo);
   document.getElementById('e2tiempo').textContent    = meses2 === 999 ? 'No posible aún' : (meses2 + ' meses');
   document.getElementById('e2ahorro').textContent    = fmt(r.escenario_optimo?.ahorro_intereses);
-  document.getElementById('e2liquidez').textContent  = liqRec < 0
-    ? `−${fmt(Math.abs(liqRec))}/mes adicional necesario`
+  document.getElementById('e2liquidez').textContent  = !liqRec || liqRec < 0
+    ? `${fmt(Math.abs(liqRec || 0))}/mes adicional necesario`
     : `${fmt(liqRec)}/mes liberado`;
 
   document.getElementById('rAccion').textContent = r.primera_accion;
