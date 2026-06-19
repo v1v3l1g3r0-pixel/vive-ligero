@@ -855,3 +855,9 @@ const response = await fetch('https://api.anthropic.com/v1/messages', {
 });
 // Leer respuesta: data.content[0].text (NO data.model ni data.text)
 ```
+NOTA IMPORTANTE SOBRE LA REFACTORIZACIÓN:
+Los archivos lib/ (avalanche-engine.ts, build-prompt.ts, formatters.ts)
+son re-exportaciones de lib/core.ts — la fuente real del código.
+Para editar la lógica de cálculo, editar lib/core.ts directamente.
+Para editar el system prompt del chat, editar lib/build-prompt.ts
+que apunta a lib/core.ts.
