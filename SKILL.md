@@ -719,6 +719,9 @@ Esta es la estructura target del proyecto después de la refactorización.
                             22 campos vl_* personalizados
   /setup-ghl/route.ts     ← Crea los 22 campos en GHL (correr 1 sola vez)
                             GET request, sin parámetros
+
+docs/coach-personalidad.md   ← Personalidad, perfiles y voz del Coach Vive Ligero
+docs/guion-parte1.md         ← Guión conversacional: flujo compartido y detección de perfil
 ```
 
 ---
