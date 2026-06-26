@@ -864,3 +864,8 @@ son re-exportaciones de lib/core.ts — la fuente real del código.
 Para editar la lógica de cálculo, editar lib/core.ts directamente.
 Para editar el system prompt del chat, editar lib/build-prompt.ts
 que apunta a lib/core.ts.
+
+## Rediseño en proceso (Camino A)
+Ver `docs/coach-personalidad.md` y `docs/guion-parte1.md` para la
+nueva arquitectura conversacional. El SKILL.md se actualizará cuando
+los cambios estén implementados en V0.
