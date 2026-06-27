@@ -884,6 +884,7 @@ completamente cuando los cambios estén implementados en V0.
 - `docs/guion-parte1.md` — Guión conversacional: flujo compartido y detección de perfil
 - `docs/guion-parte2.md` — Guión conversacional: Flujos A (Crisis) y B (Funcional)
 - `docs/mapa-conceptos-sistema.md` - Dónde y cómo se integra cada concepto en el camino del usuario
+- `docs/guion-parte3.md`  ← Cierre universal + diseño del dashboard entre sesiones
 
 ### Sprints pendientes de ejecución en V0
 - Sprint 1: Chat conversacional del Lead Magnet
