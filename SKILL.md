@@ -865,7 +865,30 @@ Para editar la lógica de cálculo, editar lib/core.ts directamente.
 Para editar el system prompt del chat, editar lib/build-prompt.ts
 que apunta a lib/core.ts.
 
-## Rediseño en proceso (Camino A)
-Ver `docs/coach-personalidad.md` y `docs/guion-parte1.md` para la
-nueva arquitectura conversacional. El SKILL.md se actualizará cuando
-los cambios estén implementados en V0.
+## Rediseño estratégico en proceso — Camino A (junio 2026)
+
+El producto está en proceso de migración de quiz lineal a experiencia
+conversacional con IA desde el Lead Magnet. El SKILL.md se actualizará
+completamente cuando los cambios estén implementados en V0.
+
+### Decisiones tomadas
+- Arquitectura: chat conversacional desde el inicio (modelo weddIA)
+- El Coach se llama "Vive Ligero" (no "Estratega Vive Ligero")
+- 3 perfiles de usuario: A (Crisis), B (Funcional pero perdido), C (Ordenado sin arquitectura)
+- Piloto enfocado en Perfiles A y B
+- Mapa de energía y Manifiesto son intervenciones universales para todos los perfiles
+- La pregunta sobre uso de tarjetas se hace ANTES de calcular el plan
+
+### Documentos de diseño en GitHub (docs/)
+- `docs/coach-personalidad.md` — Personalidad, perfiles y voz del Coach
+- `docs/guion-parte1.md` — Guión conversacional: flujo compartido y detección de perfil
+- `docs/guion-parte2.md` — Guión conversacional: Flujos A (Crisis) y B (Funcional)
+
+### Sprints pendientes de ejecución en V0
+- Sprint 1: Chat conversacional del Lead Magnet
+- Sprint 2: Dashboard bloqueado del Low Ticket
+- Sprint 3: Conversación continua en el Low Ticket (Módulos 2 y 3)
+- Sprint 4: Recalibrar copy y mensajes
+- Sprint 5: Integración y pulido
+
+Agrégalo al final del SKILL.md existente en github.com/v1v3l1g3r0-pixel/vive
