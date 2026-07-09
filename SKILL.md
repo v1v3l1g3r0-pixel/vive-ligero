@@ -893,4 +893,6 @@ completamente cuando los cambios estén implementados en V0.
 - Sprint 4: Recalibrar copy y mensajes
 - Sprint 5: Integración y pulido
 
-Agrégalo al final del SKILL.md existente en github.com/v1v3l1g3r0-pixel/vive
+### Variable de entorno actualizada
+NEXT_PUBLIC_DIAGNOSTIC_URL = https://test.vive-ligero.com/chat
+(configurada en Production, Preview y Development del proyecto v0-vive-ligero-diagnosis)
