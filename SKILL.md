@@ -896,3 +896,16 @@ completamente cuando los cambios estén implementados en V0.
 ### Variable de entorno actualizada
 NEXT_PUBLIC_DIAGNOSTIC_URL = https://test.vive-ligero.com/chat
 (configurada en Production, Preview y Development del proyecto v0-vive-ligero-diagnosis)
+
+### Sprint 1 — Completado (julio 2026)
+- Ruta `/` redirige a `/chat` (chat conversacional del Coach)
+- Quiz de 3 pasos eliminado (cadena AppFlow: 9 archivos)
+- Chat conversacional en `app/chat/page.tsx`
+- API route del Coach: `app/api/coach-chat/route.ts`
+- Extracción de tarjetas: `app/api/extract-cards/route.ts`
+- System prompt del Coach: `lib/coach-prompt.ts` (Lead Magnet)
+- System prompt del Low Ticket: `lib/build-prompt.ts`
+- Botones de ajuste con recálculo por firma en Lead Magnet y Low Ticket
+- Manifiesto e implementaciones en Low Ticket (Módulo 1)
+- `app/api/diagnose/route.ts` conservado (usado por Low Ticket)
+- `NEXT_PUBLIC_DIAGNOSTIC_URL` = https://test.vive-ligero.com/chat
