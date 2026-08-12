@@ -909,3 +909,46 @@ NEXT_PUBLIC_DIAGNOSTIC_URL = https://test.vive-ligero.com/chat
 - Manifiesto e implementaciones en Low Ticket (Módulo 1)
 - `app/api/diagnose/route.ts` conservado (usado por Low Ticket)
 - `NEXT_PUBLIC_DIAGNOSTIC_URL` = https://test.vive-ligero.com/chat
+
+- ### Motor de cálculo — decisiones clave
+
+- **Uso mensual como flujo:** el uso mensual de tarjetas se RESTA de la
+  capacidad disponible (capacidad − MSI − uso), NO se suma al saldo en la
+  simulación. Las tarjetas se pasan al motor con uso_mensual: 0.
+  Fórmula: disponible = capacidad_comoda − pago_fijo_msi − uso_mensual
+
+- **Factibilidad:** el Lead Magnet usa calcularUmbrales() de lib/core.ts
+  (misma función que el Low Ticket). Un plan es no factible cuando
+  capacidadParaPlan < sumaMinimos. En ese caso NO se presenta plan con
+  meses/fecha; se muestran los umbrales necesarios.
+
+- **Umbrales colapsados:** cuando los 3 umbrales quedan dentro del 5% entre
+  sí (pasa con tarjetas de pago mínimo alto), se muestra un solo umbral en
+  vez de tres casi idénticos.
+
+- **"Libre del saldo que te genera intereses":** la fecha de libertad se
+  refiere SOLO al revolvente, no a los MSI. Cuando hay saldo MSI, se muestra
+  un mensaje aclaratorio de que los MSI siguen su propio plazo.
+
+  ### Principio: universalidad de estados de cuenta
+
+El producto debe funcionar con el estado de cuenta de CUALQUIER banco.
+- Nunca atar extracción a nombres de secciones o etiquetas específicas.
+- Dar al modelo el criterio conceptual del dato, no reglas de ubicación.
+- No inventar datos dinámicos (meses MSI, pago fijo MSI) que no vengan
+  explícitos. El saldo MSI se muestra tal cual; el monto de intereses se
+  lee del documento, no se calcula.
+
+  ### Panel del plan (Lead Magnet)
+
+- Cada plan se inserta como mensaje role:'plan' con planData, anclado en
+  el historial (no flota al final). El usuario ve todos los escenarios.
+- Orden de inserción: mensaje del Coach primero, tarjeta del plan después.
+- Botones de ajuste (capacidad/uso/escenario) solo en el último plan.
+- Recálculo por firma (ultimaFirmaPlanRef) + contador + debounce 150ms.
+- El Coach NUNCA presenta el plan por su cuenta — solo el sistema, vía
+  [RESULTADO PRE-CALCULADO]. Evita el doble mensaje.
+
+  ### Estado actual (actualizar fecha)
+Sprint 0 ✅ · Sprint 1 ✅ (Lead Magnet conversacional completo,
+motor blindado, panel anclado) · Sprint 2 🔨 en progreso
