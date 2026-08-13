@@ -949,6 +949,37 @@ El producto debe funcionar con el estado de cuenta de CUALQUIER banco.
 - El Coach NUNCA presenta el plan por su cuenta — solo el sistema, vía
   [RESULTADO PRE-CALCULADO]. Evita el doble mensaje.
 
-  ### Estado actual (actualizar fecha)
+### Estado actual (actualizar fecha)
 Sprint 0 ✅ · Sprint 1 ✅ (Lead Magnet conversacional completo,
 motor blindado, panel anclado) · Sprint 2 🔨 en progreso
+
+### Fuentes únicas de verdad (NO duplicar datos)
+- lib/fases.ts → las 4 fases con dos capas: producto/productoSubtitulo
+  (lo que el usuario compra/alcanza) y transformacion (primera persona,
+  lo que el usuario vive). Helper: getFase(n).
+- lib/biblioteca.ts → 18 recursos de la biblioteca. Cada uno con fase(s),
+  nivelInversion (gratuito/economico/inversion_mayor), formato,
+  comoConecta, implementacion, esContenidoOriginal. Helpers:
+  getRecursosPorFase, getGuiasOriginales, getRecurso.
+
+### Dashboard progresivo (arquitectura, Sprint 3)
+- El dashboard es la interfaz PERMANENTE del usuario a partir del Low
+  Ticket. El Lead Magnet gratuito NO tiene dashboard.
+- Es persistente: guía por las fases, guarda estado (plan, manifiesto,
+  implementaciones, progreso), y es la interfaz de implementación y
+  monitoreo.
+- Activación progresiva por pago: cada fase y sus recursos se desbloquean
+  solo cuando el usuario paga esa fase. Las fases no pagadas se ven pero
+  están bloqueadas.
+- La biblioteca de recursos vive DENTRO del dashboard; cada recurso se
+  activa según la fase pagada.
+
+### Contenido original de Vive Ligero (activo diferenciador)
+- 2 guías propias en la biblioteca: "Invertir en Ti" (Fase 3, bienestar
+  postergado) y "Recuperar tu Tiempo" (Fase 2, tercerización +
+  automatización + IA como asistente + intención del tiempo).
+- Nacen de la experiencia real del fundador. Archivos fuente en outputs.
+
+Sprint 0 ✅ · Sprint 1 ✅ · Sprint 2 ✅ (roadmap visual, lib/fases.ts,
+lib/biblioteca.ts, 2 guías originales) · Sprint 3 🔨 siguiente
+(Dashboard del Sistema Vive Ligero — redefinido y ampliado)
